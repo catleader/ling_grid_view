@@ -1,0 +1,3 @@
+include ':ling_grid_view'
+include ':app'
+rootProject.name = "ling-grid"
