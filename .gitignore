@@ -8,6 +8,6 @@
 .externalNativeBuild
 .cxx
 local.properties
-app/src/main/AndroidManifest.xml
+/app/src/main/AndroidManifest.xml
 *.apk
 *.aab
