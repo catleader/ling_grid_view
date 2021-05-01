@@ -16,7 +16,7 @@ class GridController @JvmOverloads constructor(
     private val tag = "GridController"
 
     init {
-        background = ContextCompat.getDrawable(context, R.drawable.ic_move)
+        background = ContextCompat.getDrawable(context, R.drawable.ic_grid_rotate)
     }
 
     lateinit var lingGridContract: LingGridContract
@@ -76,14 +76,6 @@ class GridController @JvmOverloads constructor(
     private fun handleSizeAndRotation(center: PointF, started: PointF, ended: PointF) {
         val centerStartedLength = getVectorAmplitude(center, started)
         val centerEndedLength = getVectorAmplitude(center, ended)
-//        val lengthRatio = centerEndedLength / centerStartedLength
-//
-//        val newWidth = (startedGridUISize.width * lengthRatio).toInt()
-//        val newHeight = (startedGridUISize.height * lengthRatio).toInt()
-//        val newLeft = startedGridUISize.leftMargin - (newWidth - startedGridUISize.width) / 2
-//        val newTop = startedGridUISize.topMargin - (newHeight - startedGridUISize.height) / 2
-//
-//        newGridUISize.set(newWidth, newHeight, newLeft, newTop)
 
         val aDotB =
             (started.x - center.x) * (ended.x - center.x) + (started.y - center.y) * (ended.y - center.y)

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="288dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:background="@drawable/custom_dialog_background">
+
+        <TextView
+            android:id="@+id/tvHint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Set whatever grid size you want"
+            app:layout_constraintStart_toStartOf="@id/edtGridWidth"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <EditText
+            android:id="@+id/edtGridWidth"
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:inputType="number"
+            android:hint="grid width"
+            android:imeOptions="actionNext"
+            android:nextFocusRight="@id/edtGridHeight"
+            app:layout_constraintBottom_toTopOf="@id/btnOK"
+            app:layout_constraintEnd_toStartOf="@id/edtGridHeight"
+            app:layout_constraintHorizontal_chainStyle="spread_inside"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvHint" />
+
+
+        <EditText
+            android:id="@+id/edtGridHeight"
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:inputType="number"
+            android:hint="grid width"
+            app:layout_constraintBaseline_toBaselineOf="@id/edtGridWidth"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/edtGridWidth" />
+
+        <Button
+            android:id="@+id/btnOK"
+            style="@style/Widget.DayWork.MaterialButton.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
+            android:text="OK"
+            android:textColor="?colorOnPrimary"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="@+id/edtGridHeight"
+            app:layout_constraintStart_toStartOf="@+id/edtGridWidth"
+            app:layout_constraintTop_toBottomOf="@id/edtGridHeight" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+</FrameLayout>

@@ -6,23 +6,20 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.util.AttributeSet
-import android.view.MotionEvent
 import android.view.View
 
 class GridUI @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
+
+    var extraPadding: Int = 0
+
+    init {
+        extraPadding = (resources.displayMetrics.density * 16).toInt()
+    }
+
     var lingGridContract: LingGridContract? = null
 
-    var extraPadding = 0
-        set(value) {
-            field = value
-            rectBgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = Color.parseColor("#40000000")
-                style = Paint.Style.STROKE
-                strokeWidth = value.toFloat() * 2f
-            }
-        }
 
     var gridLineColor: Int = Color.YELLOW
         set(value) {
@@ -44,13 +41,19 @@ class GridUI @JvmOverloads constructor(
             }
         }
 
+    var showGridScaleLabel: Boolean = true
+        set(value) {
+            field = value
+            extraPadding = if(field) {
+                (resources.displayMetrics.density * 16).toInt()
+            } else {
+                0
+            }
+        }
+
     var mapZoomLevel = 19f
 
     private val tag = "GridUI"
-
-    private var pushPointX = 0f
-
-    private var pushPointY = 0f
 
     private var gridWidthPixelGap = 0f
 
@@ -59,10 +62,6 @@ class GridUI @JvmOverloads constructor(
     private var textWidth = 0f
 
     private var textBounds = Rect()
-
-    private val extraPadding2Times: Int by lazy {
-        extraPadding * 2
-    }
 
     private val rect = Rect()
 
@@ -79,7 +78,7 @@ class GridUI @JvmOverloads constructor(
 
     private var rectBgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#40000000")
-        style = Paint.Style.STROKE
+        style = Paint.Style.FILL
         strokeWidth = extraPadding.toFloat()
     }
 
@@ -100,18 +99,30 @@ class GridUI @JvmOverloads constructor(
 
         val contact = lingGridContract ?: return
         with(canvas) {
-            rect.set(
-                extraPadding,
-                extraPadding,
-                width - extraPadding,
-                height - extraPadding
-            )
+
+            var extraPadding2Times = extraPadding * 2
+
+            if (showGridScaleLabel) {
+                rect.set(
+                    extraPadding,
+                    extraPadding,
+                    width - extraPadding,
+                    height - extraPadding
+                )
+
+            } else {
+
+                rect.set(0, 0, width, height)
+
+                extraPadding = 0
+                extraPadding2Times = 0
+            }
 
             drawRect(rect, gridLinePaint)
 
             drawRect(rect, gridBgPaint)
 
-            if (mapZoomLevel >= 20f) {
+            if (mapZoomLevel >= contact.getMakeSenseZoomLevel()) {
 
                 rect.set(0, 0, width, height)
 
@@ -131,25 +142,6 @@ class GridUI @JvmOverloads constructor(
                 val gridHeight = (height - extraPadding2Times).toFloat()
 
                 for (i in 1..gridWidthSizeInMeters) {
-                    val textPaint = if (i < 10) textPaintNormal else textPaintSmall
-                    textWidth = textPaint.measureText("$i")
-
-                    textPaint.getTextBounds("$i", 0, "$i".length, textBounds)
-
-                    drawText(
-                        "$i",
-                        (extraPadding + i * gridWidthPixelGap) - gridWidthPixelGap / 2f,
-                        extraPadding.toFloat() - (extraPadding - textBounds.height()) / 2f,
-                        textPaint
-                    )
-
-                    drawText(
-                        "${gridWidthSizeInMeters - i + 1}",
-                        (extraPadding + i * gridWidthPixelGap) - gridWidthPixelGap / 2f,
-                        height - (extraPadding - textBounds.height()) / 2f,
-                        textPaint
-                    )
-
                     if (i < gridWidthSizeInMeters) {
                         drawLine(
                             extraPadding + i * gridWidthPixelGap,
@@ -159,29 +151,30 @@ class GridUI @JvmOverloads constructor(
                             gridLinePaint
                         )
                     }
+
+                    if (showGridScaleLabel) {
+                        val textPaint = if (i < 10) textPaintNormal else textPaintSmall
+                        textWidth = textPaint.measureText("$i")
+
+                        textPaint.getTextBounds("$i", 0, "$i".length, textBounds)
+
+                        drawText(
+                            "$i",
+                            (extraPadding + i * gridWidthPixelGap) - gridWidthPixelGap / 2f,
+                            extraPadding.toFloat() - (extraPadding - textBounds.height()) / 2f,
+                            textPaint
+                        )
+
+                        drawText(
+                            "${gridWidthSizeInMeters - i + 1}",
+                            (extraPadding + i * gridWidthPixelGap) - gridWidthPixelGap / 2f,
+                            height - (extraPadding - textBounds.height()) / 2f,
+                            textPaint
+                        )
+                    }
                 }
 
                 for (i in 1..gridHeightSizeInMeters) {
-                    val textPaint = if (i < 10) textPaintNormal else textPaintSmall
-
-                    textWidth = textPaint.measureText("$i")
-
-                    textPaint.getTextBounds("$i", 0, "$i".length, textBounds)
-
-                    drawText(
-                        "$i",
-                        extraPadding / 2f,
-                        (extraPadding + i * gridHeightPixelGap) - (gridHeightPixelGap - textBounds.height()) / 2f,
-                        textPaint
-                    )
-
-                    drawText(
-                        "${gridHeightSizeInMeters - i + 1}",
-                        width - extraPadding / 2f,
-                        (extraPadding + i * gridHeightPixelGap) - (gridHeightPixelGap - textBounds.height()) / 2f,
-                        textPaint
-                    )
-
                     if (i < gridHeightSizeInMeters) {
                         drawLine(
                             extraPadding.toFloat(),
@@ -192,28 +185,31 @@ class GridUI @JvmOverloads constructor(
                         )
                     }
 
-                }
-            }
-        }
-    }
+                    if (showGridScaleLabel) {
+                        val textPaint = if (i < 10) textPaintNormal else textPaintSmall
 
-    override fun onTouchEvent(event: MotionEvent?): Boolean {
-        if (event == null) return true
-        return when (event.actionMasked) {
-            MotionEvent.ACTION_DOWN -> {
-                pushPointX = event.rawX
-                pushPointY = event.rawY
-                true
+                        textWidth = textPaint.measureText("$i")
+
+                        textPaint.getTextBounds("$i", 0, "$i".length, textBounds)
+
+                        drawText(
+                            "$i",
+                            extraPadding / 2f,
+                            (extraPadding + i * gridHeightPixelGap) - (gridHeightPixelGap - textBounds.height()) / 2f,
+                            textPaint
+                        )
+
+                        drawText(
+                            "${gridHeightSizeInMeters - i + 1}",
+                            width - extraPadding / 2f,
+                            (extraPadding + i * gridHeightPixelGap) - (gridHeightPixelGap - textBounds.height()) / 2f,
+                            textPaint
+                        )
+                    }
+                }
+
+
             }
-            MotionEvent.ACTION_MOVE -> {
-                val xOffset = (event.rawX - pushPointX).toInt()
-                val yOffset = (event.rawY - pushPointY).toInt()
-                pushPointX = event.rawX
-                pushPointY = event.rawY
-                lingGridContract?.onGridMove(xOffset, yOffset)
-                true
-            }
-            else -> false
         }
     }
 

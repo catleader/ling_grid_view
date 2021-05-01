@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="DialogPopupAnimation">
+        <item name="android:windowEnterAnimation">@anim/scale_up</item>
+        <item name="android:windowExitAnimation">@anim/scale_down</item>
+    </style>
+
+    <style name="Widget.DayWork.MaterialButton.TextButton" parent="Widget.MaterialComponents.Button">
+        <item name="android:textColor">?attr/colorOnSurface</item>
+        <item name="android:padding">8dp</item>
+    </style>
+
+</resources>

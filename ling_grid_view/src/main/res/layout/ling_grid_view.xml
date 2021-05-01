@@ -13,7 +13,12 @@
 
     <com.catleader.ling_grid_view.GridController
         android:id="@+id/gridController"
-        android:layout_width="24dp"
-        android:layout_height="24dp" />
+        android:layout_width="32dp"
+        android:layout_height="32dp" />
+
+    <com.catleader.ling_grid_view.GridMover
+        android:id="@+id/gridMover"
+        android:layout_width="32dp"
+        android:layout_height="32dp"/>
 
 </merge>

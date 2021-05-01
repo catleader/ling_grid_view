@@ -23,6 +23,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private val lingGridView
         get() = binding.overlay
 
+    private val dialog: CustomGridSizeDialog by lazy {
+        CustomGridSizeDialog.getInstance(this) { gw, gh ->
+            dialog.hide()
+            lingGridView.gridSizeMeters = Pair(gw, gh)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -41,6 +48,28 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         binding.btnDecrease.setOnClickListener {
             lingGridView.gridSizeMeters = lingGridView.gridSizeMeters.run {
                 Pair(first - 1, second - 1)
+            }
+        }
+
+        binding.btnCustom.setOnClickListener {
+            dialog.show()
+        }
+
+        binding.btnToggleGridScaleLabel.setOnClickListener {
+            if(lingGridView.showGridScaleLabel) {
+                lingGridView.showGridScaleLabel = false
+                binding.btnToggleGridScaleLabel.text = "Show grid scale"
+            } else {
+                lingGridView.showGridScaleLabel = true
+                binding.btnToggleGridScaleLabel.text = "Hide grid scale"
+            }
+        }
+
+        binding.btnToggleMapType.setOnClickListener {
+            if(map.mapType == GoogleMap.MAP_TYPE_SATELLITE) {
+                map.mapType = GoogleMap.MAP_TYPE_NORMAL
+            } else {
+                map.mapType = GoogleMap.MAP_TYPE_SATELLITE
             }
         }
 

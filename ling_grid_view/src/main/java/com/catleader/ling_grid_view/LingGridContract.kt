@@ -24,6 +24,10 @@ interface LingGridContract {
 
     fun onMapIdle()
 
+    fun getMakeSenseZoomLevel(): Float
+
+    fun getMakeSenseZoomLevelForTooling(): Float
+
 }
 
 data class GridUISize(

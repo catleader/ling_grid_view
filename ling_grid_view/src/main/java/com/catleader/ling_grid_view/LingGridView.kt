@@ -1,20 +1,18 @@
 package com.catleader.ling_grid_view
 
 import android.content.Context
-import android.graphics.Color
-import android.graphics.Point
-import android.graphics.PointF
-import android.graphics.Rect
+import android.graphics.*
 import android.os.Parcel
 import android.os.Parcelable
 import android.util.AttributeSet
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.widget.FrameLayout
+import com.catleader.ling_grid_view.databinding.LingGridViewBinding
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.LatLng
-import com.catleader.ling_grid_view.databinding.LingGridViewBinding
 import kotlin.math.*
 
 class LingGridView @JvmOverloads constructor(
@@ -28,9 +26,10 @@ class LingGridView @JvmOverloads constructor(
      */
     var gridSizeMeters = Pair(16, 9)
         set(value) {
-            if (value.first > 0 && value.second > 0) {
+            if (value.first > 0 && value.second > 0
+                && value.first <= 200 && value.second <= 200) {
                 field = value
-                handleMapChanges(gridUi.rotation)
+                handleMapChange(gridUi.rotation)
             }
         }
 
@@ -52,6 +51,16 @@ class LingGridView @JvmOverloads constructor(
             gridUi.gridLineColor = value
         }
 
+    /**
+     * Control grid scale label visibility
+     */
+    var showGridScaleLabel: Boolean = true
+        set(value) {
+            field = value
+            gridUi.showGridScaleLabel = value
+            onMapMove()
+        }
+
 
     private val tag = "LingGridView"
 
@@ -63,8 +72,12 @@ class LingGridView @JvmOverloads constructor(
     private val gridController: GridController
         get() = binding.gridController
 
+    private val gridMover: GridMover
+        get() = binding.gridMover
+
     private val gridUi: GridUI
         get() = binding.gridUi
+
 
     private val rect = Rect()
 
@@ -86,8 +99,8 @@ class LingGridView @JvmOverloads constructor(
 
     private var gridMovedPoint = Point()
 
-    private val extraPadding: Float
-        get() = resources.displayMetrics.density * 16
+    private val controllerPadding: Int
+            by lazy { (resources.displayMetrics.density * 4).toInt() }
 
     // default center @Democracy Monument, Thailand
     private var centerLatLng: LatLng = LatLng(13.7567046, 100.5018897)
@@ -96,8 +109,10 @@ class LingGridView @JvmOverloads constructor(
 
     init {
         gridUi.lingGridContract = this
-        gridUi.extraPadding = extraPadding.toInt()
         gridController.visibility = View.GONE
+        gridMover.visibility = View.GONE
+        gridMover.lingGridContract = this
+
         gridController.lingGridContract = this
 
         context.theme.obtainStyledAttributes(
@@ -109,12 +124,12 @@ class LingGridView @JvmOverloads constructor(
             try {
                 gridBackgroundColor = getColor(
                     R.styleable.LingGridView_gridBgColor,
-                    Color.parseColor("#80f0c929")
+                    Color.parseColor("#3200BAF1")
                 )
 
                 gridLineColor = getColor(
                     R.styleable.LingGridView_gridLineColor,
-                    Color.parseColor("#fff0c929")
+                    Color.parseColor("#ffffffff")
                 )
 
                 gridSizeMeters = Pair(
@@ -140,7 +155,7 @@ class LingGridView @JvmOverloads constructor(
             zoomLevel = gMap.cameraPosition.zoom,
             displayDensity = resources.displayMetrics.density
         )
-        return (gridSizeInMeters / metersPerPixels + 2 * extraPadding).toInt()
+        return (gridSizeInMeters / metersPerPixels + 2 * gridUi.extraPadding).toInt()
     }
 
     fun initGrid(
@@ -155,10 +170,10 @@ class LingGridView @JvmOverloads constructor(
 
         if (state != null) {
             centerLatLng = LatLng(state.gridLatitude, state.gridLongitude)
-            handleMapChanges(state.gridRotation)
+            handleMapChange(state.gridRotation)
             stateToBeRestored = null
         } else {
-            handleMapChanges(0f)
+            handleMapChange(0f)
         }
     }
 
@@ -195,7 +210,7 @@ class LingGridView @JvmOverloads constructor(
         return gridSizeMeters
     }
 
-    private fun handleMapChanges(newDegrees: Float) {
+    private fun handleMapChange(newDegrees: Float) {
         gridUi.rotation = newDegrees
 
         val gMap = map ?: return
@@ -220,61 +235,108 @@ class LingGridView @JvmOverloads constructor(
         glp.topMargin = top
         gridUi.layoutParams = glp
 
-        repositionGridController()
+        repositionGridTools()
     }
 
-    private fun repositionGridController() {
-        val glp = gridUi.layoutParams as? LayoutParams? ?: return
+    private val m = Matrix()
 
-        val gclPoint = getRotatedPointForGridController(
+    private val inM = Matrix()
+
+    private fun repositionGridTools() {
+        val glp = gridUi.layoutParams as? LayoutParams? ?: return
+        val gclp = gridController.layoutParams as? LayoutParams? ?: return
+        val gmlp = gridMover.layoutParams as? LayoutParams? ?: return
+
+        val gc = getRotatedPoint(
             gridCenterX = glp.leftMargin + glp.width / 2,
             gridCenterY = glp.topMargin + glp.height / 2,
-            gridControllerX = glp.leftMargin + glp.width,
-            gridControllerY = glp.topMargin + glp.height,
+            targetX = glp.leftMargin + glp.width + controllerPadding,
+            targetY = glp.topMargin + glp.height + controllerPadding,
             angle = gridUi.rotation
         )
 
-        val gclp = gridController.layoutParams as? LayoutParams? ?: return
-        gclp.leftMargin = gclPoint.x - gclp.width / 2
-        gclp.topMargin = gclPoint.y - gclp.height / 2
+        val cGC = getRotatedPoint(
+            gridCenterX = glp.leftMargin + glp.width / 2,
+            gridCenterY = glp.topMargin + glp.height / 2,
+            targetX = glp.leftMargin + glp.width + gclp.width / 2 + controllerPadding,
+            targetY = glp.topMargin + glp.height + gclp.height / 2 + controllerPadding,
+            angle = gridUi.rotation
+        )
+
+        val gm = getRotatedPoint(
+            gridCenterX = glp.leftMargin + glp.width / 2,
+            gridCenterY = glp.topMargin + glp.height / 2,
+            targetX = glp.leftMargin + glp.width + controllerPadding,
+            targetY = glp.topMargin + glp.height - gmlp.height - controllerPadding,
+            angle = gridUi.rotation
+        )
+
+        val cGM = getRotatedPoint(
+            gridCenterX = glp.leftMargin + glp.width / 2,
+            gridCenterY = glp.topMargin + glp.height / 2,
+            targetX = glp.leftMargin + glp.width + gmlp.width / 2 + controllerPadding,
+            targetY = glp.topMargin + glp.height - gmlp.height / 2 - controllerPadding,
+            angle = gridUi.rotation
+        )
+
+        val gcPoint = floatArrayOf(gc.x.toFloat(), gc.y.toFloat())
+
+        val gmPoint = floatArrayOf(gm.x.toFloat(), gm.y.toFloat())
+
+        mapRotationPoint(gcPoint, cGC.x.toFloat(), cGC.y.toFloat())
+
+        mapRotationPoint(gmPoint, cGM.x.toFloat(), cGM.y.toFloat())
+
+        gclp.leftMargin = gcPoint[0].toInt()
+        gclp.topMargin = gcPoint[1].toInt()
         gridController.layoutParams = gclp
+
+        gmlp.leftMargin = gmPoint[0].toInt()
+        gmlp.topMargin = gmPoint[1].toInt()
+        gridMover.layoutParams = gmlp
+        gridMover.rotation = gridUi.rotation
+
     }
 
-    override fun onInterceptTouchEvent(ev: MotionEvent?): Boolean {
-        if (isMapMoving || ev == null) return true
-
-        val action = ev.actionMasked
-
-        val pointerId = ev.getPointerId(ev.actionIndex)
-
-        return when (action) {
-            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
-                when {
-                    activePointerId == invalidPointerID -> {
-                        activePointerId = pointerId
-                        false
-                    }
-                    pointerId != activePointerId -> {
-                        activePointerId = invalidPointerID
-                        true
-                    }
-                    else -> {
-                        activePointerId = pointerId
-                        false
-                    }
-                }
-            }
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> {
-                activePointerId = invalidPointerID
-                true
-            }
-            else -> false
-
+    private fun mapRotationPoint(p: FloatArray, cx: Float, cy: Float) {
+        m.reset()
+        m.setRotate(gridUi.rotation, cx, cy)
+        try {
+            m.invert(inM)
+        } catch (e: Exception) {
+            Log.w(tag, "can't invert matrix: ${e.message}")
         }
+
+        inM.mapPoints(p)
     }
+
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         return false
+    }
+
+    override fun getMakeSenseZoomLevel(): Float {
+        val gw = gridSizeMeters.first
+        val gh = gridSizeMeters.second
+
+        return when {
+            gw >= 100 || gh >= 100 -> 17.5f
+            gw >= 50 || gh >= 50 -> 19f
+            gw >= 25 || gh >= 25 -> 20f
+            else -> 20.2f
+        }
+    }
+
+    override fun getMakeSenseZoomLevelForTooling(): Float {
+        val gw = gridSizeMeters.first
+        val gh = gridSizeMeters.second
+
+        return when {
+            gw >= 100 || gh >= 100 -> 16f
+            gw >= 50 || gh >= 50 -> 18f
+            gw >= 25 || gh >= 25 -> 19f
+            else -> 20f
+        }
     }
 
     override fun onMapMove() {
@@ -284,11 +346,20 @@ class LingGridView @JvmOverloads constructor(
         externalDegrees = gMap.cameraPosition.bearing
 
         val newDegrees = (gridUi.rotation - diff) % 360
-        val zoomLevel = gMap.cameraPosition.zoom
-        gridUi.mapZoomLevel = zoomLevel
-        gridController.visibility = if (zoomLevel >= 20f) View.VISIBLE else View.GONE
 
-        handleMapChanges(newDegrees)
+        val zoomLevel = gMap.cameraPosition.zoom
+
+        gridUi.mapZoomLevel = zoomLevel
+
+        if (zoomLevel >= getMakeSenseZoomLevelForTooling()) {
+            gridController.visibility = View.VISIBLE
+            gridMover.visibility = View.VISIBLE
+        } else {
+            gridController.visibility = View.GONE
+            gridMover.visibility = View.GONE
+        }
+
+        handleMapChange(newDegrees)
     }
 
     override fun onMapIdle() {
@@ -312,6 +383,11 @@ class LingGridView @JvmOverloads constructor(
         gclp.topMargin += yOffset
         gridController.layoutParams = gclp
 
+        val gmlp = gridMover.layoutParams as? LayoutParams? ?: return
+        gmlp.leftMargin += xOffset
+        gmlp.topMargin += yOffset
+        gridMover.layoutParams = gmlp
+
         val gMap = map ?: return
 
         val left = rect.left.toFloat()
@@ -333,7 +409,7 @@ class LingGridView @JvmOverloads constructor(
         rotated: Float
     ) {
         gridUi.rotation = rotated
-        repositionGridController()
+        repositionGridTools()
     }
 
     private fun notifyListeners() {
@@ -348,18 +424,18 @@ class LingGridView @JvmOverloads constructor(
         return (gridUi.layoutParams as? LayoutParams?)?.width ?: 0
     }
 
-    private fun getRotatedPointForGridController(
+    private fun getRotatedPoint(
         gridCenterX: Int,
         gridCenterY: Int,
-        gridControllerX: Int,
-        gridControllerY: Int,
+        targetX: Int,
+        targetY: Int,
         angle: Float
     ): Point {
         tempPointA.set(gridCenterX.toFloat(), gridCenterY.toFloat())
-        tempPointB.set(gridControllerX.toFloat(), gridControllerY.toFloat())
+        tempPointB.set(targetX.toFloat(), targetY.toFloat())
         val dOA: Float = getVectorAmplitude(tempPointA, tempPointB)
         val p1: Double = Math.toRadians(angle.toDouble())
-        val cons = acos(((gridControllerX - gridCenterX) / dOA).toDouble())
+        val cons = acos(((targetX - gridCenterX) / dOA).toDouble())
         val x = (gridCenterX + dOA * cos(p1 + cons)).toInt()
         val y = (gridCenterY + dOA * sin(p1 + cons)).toInt()
         return Point(x, y)
