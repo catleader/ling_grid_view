@@ -61,9 +61,9 @@ class GridUI @JvmOverloads constructor(
 
     var mapZoomLevel = 19f
 
-    private var gridWidthPixelGap = 0f
+    private var pixelsPerMeter = 0f
 
-    private var gridHeightPixelGap = 0f
+    private var pixelsPerMeterV2 = 0f
 
     private var textWidth = 0f
 
@@ -134,30 +134,29 @@ class GridUI @JvmOverloads constructor(
 
                 rect.set(0, 0, width, height)
 
-                if(showGridScaleLabel)drawRect(rect, rectBgPaint)
+                if (showGridScaleLabel) drawRect(rect, rectBgPaint)
 
                 val gridWidthSizeInMeters = contact.getGridSizeInMeters().first
 
-                gridWidthPixelGap = (width - extraPadding2Times) / gridWidthSizeInMeters.toFloat()
+                pixelsPerMeter = (width - extraPadding2Times) / gridWidthSizeInMeters.toFloat()
 
                 val gridWidth = (width - extraPadding2Times).toFloat()
 
                 val gridHeightSizeInMeters = contact.getGridSizeInMeters().second
 
-                gridHeightPixelGap =
-                    (height - extraPadding2Times) / gridHeightSizeInMeters.toFloat()
-
                 val gridHeight = (height - extraPadding2Times).toFloat()
 
                 for (i in 1..gridWidthSizeInMeters) {
                     if (i < gridWidthSizeInMeters) {
-                        drawLine(
-                            extraPadding + i * gridWidthPixelGap,
-                            extraPadding.toFloat(),
-                            extraPadding + i * gridWidthPixelGap,
-                            extraPadding + gridHeight,
-                            gridLinePaint
-                        )
+                        if (i % gridScaleStep == 0) {
+                            drawLine(
+                                extraPadding + i * pixelsPerMeter,
+                                extraPadding.toFloat(),
+                                extraPadding + i * pixelsPerMeter,
+                                extraPadding + gridHeight,
+                                gridLinePaint
+                            )
+                        }
                     }
 
                     if (showGridScaleLabel) {
@@ -171,7 +170,7 @@ class GridUI @JvmOverloads constructor(
                         if (i % gridScaleStep == 0) {
                             drawText(
                                 "$i",
-                                (extraPadding + i * gridWidthPixelGap) - gridWidthPixelGap / 2f,
+                                extraPadding + i * pixelsPerMeter,
                                 extraPadding.toFloat() - (extraPadding - textHeight) / 2f,
                                 textPaint
                             )
@@ -181,7 +180,7 @@ class GridUI @JvmOverloads constructor(
                         if (label % gridScaleStep == 0) {
                             drawText(
                                 "$label",
-                                (extraPadding + i * gridWidthPixelGap) - gridWidthPixelGap / 2f,
+                                extraPadding + (i - 1) * pixelsPerMeter,
                                 height - (extraPadding - textHeight) / 2f,
                                 textPaint
                             )
@@ -192,13 +191,16 @@ class GridUI @JvmOverloads constructor(
 
                 for (i in 1..gridHeightSizeInMeters) {
                     if (i < gridHeightSizeInMeters) {
-                        drawLine(
-                            extraPadding.toFloat(),
-                            extraPadding + i * gridHeightPixelGap,
-                            gridWidth + extraPadding,
-                            extraPadding + i * gridHeightPixelGap,
-                            gridLinePaint
-                        )
+
+                        if (i % gridScaleStep == 0) {
+                            drawLine(
+                                extraPadding.toFloat(),
+                                extraPadding + i * pixelsPerMeter,
+                                gridWidth + extraPadding,
+                                extraPadding + i * pixelsPerMeter,
+                                gridLinePaint
+                            )
+                        }
                     }
 
                     if (showGridScaleLabel) {
@@ -216,7 +218,7 @@ class GridUI @JvmOverloads constructor(
                             drawText(
                                 "$i",
                                 extraPadding / 2f,
-                                (extraPadding + i * gridHeightPixelGap) - (gridHeightPixelGap - textHeight) / 2f,
+                                (extraPadding + i * pixelsPerMeter) + textHeight / 2,
                                 textPaint
                             )
                         }
@@ -226,7 +228,7 @@ class GridUI @JvmOverloads constructor(
                             drawText(
                                 "$label",
                                 width - extraPadding / 2f,
-                                (extraPadding + i * gridHeightPixelGap) - (gridHeightPixelGap - textHeight) / 2f,
+                                (extraPadding + (i - 1) * pixelsPerMeter) + textHeight / 2,
                                 textPaint
                             )
                         }
