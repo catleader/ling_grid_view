@@ -386,7 +386,6 @@ class LingGridView @JvmOverloads constructor(
         val zoomLevel = gMap.cameraPosition.zoom
 
         gridUi.mapZoomLevel = zoomLevel
-        Log.d(tag, "zoomLevel: $zoomLevel")
 
         if (zoomLevel >= getZoomLevelForToolingVisibilities()) {
             gridController.visibility = View.VISIBLE

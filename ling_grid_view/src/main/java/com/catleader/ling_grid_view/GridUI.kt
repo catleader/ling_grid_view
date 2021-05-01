@@ -22,7 +22,6 @@ class GridUI @JvmOverloads constructor(
 
     var lingGridContract: LingGridContract? = null
 
-
     var gridLineColor: Int = Color.YELLOW
         set(value) {
             field = value
@@ -32,7 +31,6 @@ class GridUI @JvmOverloads constructor(
                 strokeWidth = context.resources.displayMetrics.density
             }
         }
-
 
     var gridBgColor: Int = Color.YELLOW
         set(value) {
@@ -68,8 +66,6 @@ class GridUI @JvmOverloads constructor(
     var mapZoomLevel = 19f
 
     private var pixelsPerMeter = 0f
-
-    private var pixelsPerMeterV2 = 0f
 
     private var textWidth = 0f
 
@@ -112,8 +108,8 @@ class GridUI @JvmOverloads constructor(
         if (canvas == null) return
 
         val contact = lingGridContract ?: return
-        with(canvas) {
 
+        with(canvas) {
             var extraPadding2Times = extraPadding * 2
 
             if (showGridScaleLabel) {
@@ -241,7 +237,6 @@ class GridUI @JvmOverloads constructor(
 
                     }
                 }
-
 
             }
         }
