@@ -17,16 +17,20 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var binding: ActivityMainBinding
 
-    private val tvGridLength
-        get() = binding.tvGridLength
-
     private val lingGridView
-        get() = binding.overlay
+        get() = binding.lingGridView
 
-    private val dialog: CustomGridSizeDialog by lazy {
+    private val gridSizeDialog: CustomGridSizeDialog by lazy {
         CustomGridSizeDialog.getInstance(this) { gw, gh ->
-            dialog.hide()
+            gridSizeDialog.hide()
             lingGridView.gridSizeMeters = Pair(gw, gh)
+        }
+    }
+
+    private val gridScaleStepDialog: CustomGridScaleStepDialog by lazy {
+        CustomGridScaleStepDialog.getInstance(this) { gridScale ->
+            gridScaleStepDialog.hide()
+            lingGridView.gridScaleStep = gridScale
         }
     }
 
@@ -39,24 +43,16 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
-        binding.btnIncrease.setOnClickListener {
-            lingGridView.gridSizeMeters = lingGridView.gridSizeMeters.run {
-                Pair(first + 1, second + 1)
-            }
+        binding.btnCustomGridSize.setOnClickListener {
+            gridSizeDialog.show()
         }
 
-        binding.btnDecrease.setOnClickListener {
-            lingGridView.gridSizeMeters = lingGridView.gridSizeMeters.run {
-                Pair(first - 1, second - 1)
-            }
-        }
-
-        binding.btnCustom.setOnClickListener {
-            dialog.show()
+        binding.btnCustomGridScaleStep.setOnClickListener {
+            gridScaleStepDialog.show()
         }
 
         binding.btnToggleGridScaleLabel.setOnClickListener {
-            if(lingGridView.showGridScaleLabel) {
+            if (lingGridView.showGridScaleLabel) {
                 lingGridView.showGridScaleLabel = false
                 binding.btnToggleGridScaleLabel.text = "Show grid scale"
             } else {
@@ -66,13 +62,33 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
         binding.btnToggleMapType.setOnClickListener {
-            if(map.mapType == GoogleMap.MAP_TYPE_SATELLITE) {
+            if (map.mapType == GoogleMap.MAP_TYPE_SATELLITE) {
                 map.mapType = GoogleMap.MAP_TYPE_NORMAL
             } else {
                 map.mapType = GoogleMap.MAP_TYPE_SATELLITE
             }
         }
 
+        binding.btnCenterGrid.setOnClickListener {
+            lingGridView.relocateGridToCenterOfMap()
+        }
+
+    }
+
+    private var latestGridLatLng: LatLng? = null
+
+    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+        val latLng = savedInstanceState.getDoubleArray("latlng")
+        if (latLng != null) latestGridLatLng = LatLng(latLng[0], latLng[1])
+        super.onRestoreInstanceState(savedInstanceState)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putDoubleArray(
+            "latlng",
+            doubleArrayOf(lingGridView.centerLatLng.latitude, lingGridView.centerLatLng.longitude)
+        )
+        super.onSaveInstanceState(outState)
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
@@ -80,12 +96,19 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         map.mapType = GoogleMap.MAP_TYPE_SATELLITE
         map.uiSettings.apply {
             isTiltGesturesEnabled = false
-            isRotateGesturesEnabled = false
+            isRotateGesturesEnabled = true
         }
 
         val step = LatLng(18.7649001, 98.9362624)
 
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(step, 19f))
+        if (latestGridLatLng != null) map.moveCamera(
+            CameraUpdateFactory.newLatLngZoom(
+                latestGridLatLng,
+                19f
+            )
+        ) else {
+            map.moveCamera(CameraUpdateFactory.newLatLngZoom(step, 19f))
+        }
 
         map.setOnCameraIdleListener {
             lingGridView.onMapIdle()
@@ -98,6 +121,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         map.setOnCameraMoveListener {
             lingGridView.onMapMove()
         }
+
     }
 
     private var isInitialized = false

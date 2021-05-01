@@ -1,32 +1,25 @@
 package com.catleader.ling_grid_view
 
 import android.graphics.PointF
-import android.graphics.Rect
 
 interface LingGridContract {
-    fun getGridUICenter(): PointF
+    fun getGridUiCenterPoint(): PointF
+
+    fun getGridUiRotation(): Float
 
     fun onGridMove(xOffset: Int, yOffset: Int)
-
-    fun getStartedRotatedDegree(): Float
-
-    fun getStatedGridUISize(): GridUISize
-
-    fun getGridRect(): Pair<Rect, Float>
 
     fun getGridSizeInMeters(): Pair<Int, Int>
 
     fun onGridRotate(gridUISize: GridUISize, rotated: Float)
 
-    fun getGridSize(): Int
-
     fun onMapMove()
 
     fun onMapIdle()
 
-    fun getMakeSenseZoomLevel(): Float
+    fun getZoomLevelForGridLineDrawing(): Float
 
-    fun getMakeSenseZoomLevelForTooling(): Float
+    fun getZoomLevelForToolingVisibilities(): Float
 
 }
 

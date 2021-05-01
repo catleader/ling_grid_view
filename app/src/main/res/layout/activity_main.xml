@@ -1,73 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout android:id="@+id/root"
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    tools:context=".MainActivity">
+
 
     <Button
-        android:id="@+id/btnIncrease"
-        android:text="Increase"
+        android:id="@+id/btnCustomGridSize"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_gravity="end|top"
-        android:layout_marginEnd="16dp"
         android:layout_marginTop="16dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
-
-    <Button
-        android:id="@+id/btnDecrease"
-        android:text="Decrease"
-        android:layout_gravity="end|top"
-        android:layout_marginEnd="128dp"
-        android:layout_marginTop="16dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
-
-    <Button
-        android:id="@+id/btnToggleMapType"
-        android:text="Toggle MapType"
-        android:layout_gravity="end|top"
         android:layout_marginEnd="16dp"
-        android:layout_marginTop="108dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
-
-    <Button
-        android:id="@+id/btnCustom"
-        android:text="Custom"
-        android:layout_gravity="end|top"
-        android:layout_marginEnd="16dp"
-        android:layout_marginTop="64dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:text="Custom GridSize" />
 
     <Button
         android:id="@+id/btnToggleGridScaleLabel"
-        android:text="Hide grid scale"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_gravity="end|top"
-        android:layout_marginEnd="128dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="192dp"
+        android:text="Hide grid scale" />
+
+    <Button
+        android:id="@+id/btnCustomGridScaleStep"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|top"
+        android:layout_marginStart="16dp"
         android:layout_marginTop="64dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:layout_marginEnd="192dp"
+        android:text="Custom GridScale" />
 
-
-    <TextView
-        android:id="@+id/tvGridLength"
-        android:elevation="16dp"
-        android:textSize="16sp"
-        android:textStyle="bold"
+    <Button
+        android:id="@+id/btnToggleMapType"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|top"
+        android:layout_marginTop="64dp"
+        android:layout_marginEnd="16dp"
+        android:text="Toggle MapType" />
+
+    <Button
+        android:id="@+id/btnCenterGrid"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|top"
+        android:layout_marginTop="108dp"
+        android:layout_marginEnd="16dp"
+        android:text="Center grid" />
+
 
     <com.catleader.ling_grid_view.LingGridView
-        android:id="@+id/overlay"
-        android:elevation="1dp"
+        android:id="@+id/lingGridView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:gridColumnCount="12"
-        app:gridRowCount="12"/>
+        app:gridBgColor="#3200BAF1"
+        app:gridLineColor="#FFFFFFFF"
+        app:gridColumnCount="16"
+        app:gridRowCount="16"
+        app:showGridScaleLabel="true"
+        app:gridScaleStep="4"/>
 
     <fragment
         android:id="@+id/map"

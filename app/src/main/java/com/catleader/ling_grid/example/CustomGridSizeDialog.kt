@@ -9,6 +9,7 @@ import android.view.View
 import android.view.Window
 import android.widget.Button
 import android.widget.EditText
+import com.catleader.ling_grid_view.LingGridView
 
 class CustomGridSizeDialog private constructor(
     private val context: Context,
@@ -43,21 +44,31 @@ class CustomGridSizeDialog private constructor(
             val gw = edtGw.text.toString().toIntOrNull()
             val gh = edtGh.text.toString().toIntOrNull()
 
+            val error: Boolean
 
-            var error = false
-
-            if (gw == null) {
-                edtGw.error = "need value"
-                error = true
+            when {
+                gw == null -> {
+                    edtGw.error = "need value."
+                    error = true
+                }
+                gw > LingGridView.maxGridSizePossibleInMeter -> {
+                    edtGw.error = "must be in 1..${LingGridView.maxGridSizePossibleInMeter}"
+                    error = true
+                }
+                gh == null -> {
+                    edtGw.error = "need value."
+                    error = true
+                }
+                gh > LingGridView.maxGridSizePossibleInMeter -> {
+                    edtGw.error = "must be in 1..${LingGridView.maxGridSizePossibleInMeter}"
+                    error = true
+                }
+                else -> {
+                    error = false
+                }
             }
 
-            if (gh == null) {
-                edtGh.error = "need value"
-                error = true
-            }
-
-            if(error) return@setOnClickListener
-
+            if (error) return@setOnClickListener
 
             onValueSet?.invoke(gw!!, gh!!)
         }

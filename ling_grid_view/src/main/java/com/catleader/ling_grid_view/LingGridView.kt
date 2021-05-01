@@ -24,10 +24,11 @@ class LingGridView @JvmOverloads constructor(
     /**
      * width and height in meters
      */
-    var gridSizeMeters = Pair(16, 9)
+    var gridSizeMeters = Pair(16, 16)
         set(value) {
             if (value.first > 0 && value.second > 0
-                && value.first <= 200 && value.second <= 200) {
+                && value.first <= maxGridSizePossibleInMeter && value.second <= maxGridSizePossibleInMeter
+            ) {
                 field = value
                 handleMapChange(gridUi.rotation)
             }
@@ -61,10 +62,18 @@ class LingGridView @JvmOverloads constructor(
             onMapMove()
         }
 
+    /**
+     * Set grid scale step
+     */
+    var gridScaleStep: Int = 1
+        set(value) {
+            if (value in 1..maxGridSizePossibleInMeter) {
+                field = value
+                gridUi.gridScaleStep = value
+            }
+        }
 
     private val tag = "LingGridView"
-
-    private var listeners = mutableListOf<Listener>()
 
     private var binding: LingGridViewBinding =
         LingGridViewBinding.inflate(LayoutInflater.from(context), this)
@@ -87,13 +96,7 @@ class LingGridView @JvmOverloads constructor(
 
     private val tempPointB = PointF()
 
-    private val gridUISize = GridUISize()
-
     private var externalDegrees = 0f
-
-    private val invalidPointerID = -1
-
-    private var activePointerId = invalidPointerID
 
     private var isMapMoving = false
 
@@ -102,12 +105,15 @@ class LingGridView @JvmOverloads constructor(
     private val controllerPadding: Int
             by lazy { (resources.displayMetrics.density * 4).toInt() }
 
-    // default center @Democracy Monument, Thailand
-    private var centerLatLng: LatLng = LatLng(13.7567046, 100.5018897)
+    /**
+     *  default center @Democracy Monument, Thailand
+     */
+    var centerLatLng: LatLng = LatLng(13.7567046, 100.5018897)
 
     private var stateToBeRestored: SavedState? = null
 
     init {
+        elevation = 1 * resources.displayMetrics.density
         gridUi.lingGridContract = this
         gridController.visibility = View.GONE
         gridMover.visibility = View.GONE
@@ -133,15 +139,15 @@ class LingGridView @JvmOverloads constructor(
                 )
 
                 gridSizeMeters = Pair(
-                    getInteger(
-                        R.styleable.LingGridView_gridColumnCount,
-                        10
-                    ),
-                    getInteger(
-                        R.styleable.LingGridView_gridRowCount,
-                        10
-                    )
+                    getInteger(R.styleable.LingGridView_gridColumnCount, 16),
+                    getInteger(R.styleable.LingGridView_gridRowCount, 16)
                 )
+
+                gridScaleStep = getInteger(R.styleable.LingGridView_gridScaleStep, 1)
+
+                showGridScaleLabel = getBoolean(R.styleable.LingGridView_showGridScaleLabel, true)
+
+
             } finally {
                 recycle()
             }
@@ -170,6 +176,11 @@ class LingGridView @JvmOverloads constructor(
 
         if (state != null) {
             centerLatLng = LatLng(state.gridLatitude, state.gridLongitude)
+            gridSizeMeters = Pair(state.gridWidth, state.gridHeight)
+            gridBackgroundColor = state.gridBackgroundColor
+            gridLineColor = state.gridLineColor
+            showGridScaleLabel = state.showGridScaleLabel == 1
+            gridScaleStep = state.gridScaleStep
             handleMapChange(state.gridRotation)
             stateToBeRestored = null
         } else {
@@ -177,7 +188,17 @@ class LingGridView @JvmOverloads constructor(
         }
     }
 
-    override fun getGridUICenter(): PointF {
+    fun relocateGridToCenterOfMap() {
+        val gMap = map ?: return
+        if (centerLatLng == gMap.cameraPosition.target) {
+            gridUi.rotation = 0f
+        } else {
+            centerLatLng = gMap.cameraPosition.target
+        }
+        onMapMove()
+    }
+
+    override fun getGridUiCenterPoint(): PointF {
         tempPointA.set(
             gridUi.left + gridUi.width / 2f,
             gridUi.top + gridUi.height / 2f
@@ -185,25 +206,8 @@ class LingGridView @JvmOverloads constructor(
         return tempPointA
     }
 
-    override fun getStartedRotatedDegree(): Float {
+    override fun getGridUiRotation(): Float {
         return gridUi.rotation
-    }
-
-    override fun getStatedGridUISize(): GridUISize {
-        val glp = gridUi.layoutParams as? LayoutParams? ?: return gridUISize
-
-        return gridUISize.apply {
-            set(
-                glp.width,
-                glp.height,
-                glp.leftMargin,
-                glp.topMargin
-            )
-        }
-    }
-
-    override fun getGridRect(): Pair<Rect, Float> {
-        return Pair(rect, gridUi.rotation)
     }
 
     override fun getGridSizeInMeters(): Pair<Int, Int> {
@@ -315,27 +319,27 @@ class LingGridView @JvmOverloads constructor(
         return false
     }
 
-    override fun getMakeSenseZoomLevel(): Float {
+    override fun getZoomLevelForGridLineDrawing(): Float {
         val gw = gridSizeMeters.first
         val gh = gridSizeMeters.second
 
         return when {
             gw >= 100 || gh >= 100 -> 17.5f
-            gw >= 50 || gh >= 50 -> 19f
-            gw >= 25 || gh >= 25 -> 20f
-            else -> 20.2f
+            gw >= 50 || gh >= 50 -> 18.5f
+            gw >= 25 || gh >= 25 -> 19.5f
+            else -> 20f
         }
     }
 
-    override fun getMakeSenseZoomLevelForTooling(): Float {
+    override fun getZoomLevelForToolingVisibilities(): Float {
         val gw = gridSizeMeters.first
         val gh = gridSizeMeters.second
 
         return when {
-            gw >= 100 || gh >= 100 -> 16f
-            gw >= 50 || gh >= 50 -> 18f
-            gw >= 25 || gh >= 25 -> 19f
-            else -> 20f
+            gw >= 100 || gh >= 100 -> 15f
+            gw >= 50 || gh >= 50 -> 16f
+            gw >= 25 || gh >= 25 -> 17f
+            else -> 18f
         }
     }
 
@@ -351,7 +355,7 @@ class LingGridView @JvmOverloads constructor(
 
         gridUi.mapZoomLevel = zoomLevel
 
-        if (zoomLevel >= getMakeSenseZoomLevelForTooling()) {
+        if (zoomLevel >= getZoomLevelForToolingVisibilities()) {
             gridController.visibility = View.VISIBLE
             gridMover.visibility = View.VISIBLE
         } else {
@@ -412,17 +416,6 @@ class LingGridView @JvmOverloads constructor(
         repositionGridTools()
     }
 
-    private fun notifyListeners() {
-        val glp = gridUi.layoutParams as? LayoutParams? ?: return
-
-        listeners.forEach { each ->
-            each.onGridSizeChanged(glp.width, glp.height)
-        }
-    }
-
-    override fun getGridSize(): Int {
-        return (gridUi.layoutParams as? LayoutParams?)?.width ?: 0
-    }
 
     private fun getRotatedPoint(
         gridCenterX: Int,
@@ -441,20 +434,18 @@ class LingGridView @JvmOverloads constructor(
         return Point(x, y)
     }
 
-    fun addListener(listener: Listener) {
-        listeners.add(listener)
-    }
-
-    fun interface Listener {
-        fun onGridSizeChanged(gridWidth: Int, gridHeight: Int)
-    }
-
     override fun onSaveInstanceState(): Parcelable {
         val superState = super.onSaveInstanceState()
         val state = SavedState(superState)
         state.gridLatitude = centerLatLng.latitude
         state.gridLongitude = centerLatLng.longitude
         state.gridRotation = gridUi.rotation
+        state.gridWidth = gridSizeMeters.first
+        state.gridHeight = gridSizeMeters.second
+        state.gridBackgroundColor = gridBackgroundColor
+        state.gridLineColor = gridLineColor
+        state.showGridScaleLabel = if (showGridScaleLabel) 1 else 0
+        state.gridScaleStep = gridScaleStep
         return state
     }
 
@@ -475,6 +466,12 @@ class LingGridView @JvmOverloads constructor(
         var gridLatitude: Double = 0.0
         var gridLongitude: Double = 0.0
         var gridRotation = 0f
+        var gridWidth: Int = 0
+        var gridHeight: Int = 0
+        var gridBackgroundColor: Int = Color.GRAY
+        var gridLineColor: Int = Color.WHITE
+        var showGridScaleLabel: Int = 0
+        var gridScaleStep: Int = 1
 
         constructor(superState: Parcelable?) : super(superState)
 
@@ -482,6 +479,12 @@ class LingGridView @JvmOverloads constructor(
             gridLatitude = parcel.readDouble()
             gridLongitude = parcel.readDouble()
             gridRotation = parcel.readFloat()
+            gridWidth = parcel.readInt()
+            gridHeight = parcel.readInt()
+            gridBackgroundColor = parcel.readInt()
+            gridLineColor = parcel.readInt()
+            showGridScaleLabel = parcel.readInt()
+            gridScaleStep = parcel.readInt()
         }
 
         override fun writeToParcel(parcel: Parcel, flags: Int) {
@@ -489,6 +492,12 @@ class LingGridView @JvmOverloads constructor(
             parcel.writeDouble(gridLatitude)
             parcel.writeDouble(gridLongitude)
             parcel.writeFloat(gridRotation)
+            parcel.writeInt(gridWidth)
+            parcel.writeInt(gridHeight)
+            parcel.writeInt(gridBackgroundColor)
+            parcel.writeInt(gridLineColor)
+            parcel.writeInt(showGridScaleLabel)
+            parcel.writeInt(gridScaleStep)
         }
 
         override fun describeContents(): Int {
@@ -507,6 +516,8 @@ class LingGridView @JvmOverloads constructor(
     }
 
     companion object {
+        const val maxGridSizePossibleInMeter = 200
+
         fun getVectorAmplitude(a: PointF, b: PointF): Float {
             return sqrt((b.x - a.x).pow(2) + (b.y - a.y).pow(2))
         }

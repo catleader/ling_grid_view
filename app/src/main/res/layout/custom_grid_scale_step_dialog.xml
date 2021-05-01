@@ -14,37 +14,28 @@
             android:id="@+id/tvHint"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
             android:layout_marginTop="16dp"
-            android:text="Set grid size in meters unit"
-            app:layout_constraintStart_toStartOf="@id/edtGridWidth"
+            android:text="Set grid scale step"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <EditText
-            android:id="@+id/edtGridWidth"
-            android:layout_width="128dp"
+            android:id="@+id/edtGridScaleStep"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:inputType="number"
-            android:hint="grid width"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="16dp"
+            android:hint="grid scale step"
             android:imeOptions="actionNext"
+            android:inputType="number"
             android:nextFocusRight="@id/edtGridHeight"
             app:layout_constraintBottom_toTopOf="@id/btnOK"
-            app:layout_constraintEnd_toStartOf="@id/edtGridHeight"
-            app:layout_constraintHorizontal_chainStyle="spread_inside"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tvHint" />
 
-
-        <EditText
-            android:id="@+id/edtGridHeight"
-            android:layout_width="128dp"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
-            android:inputType="number"
-            android:hint="grid height"
-            app:layout_constraintBaseline_toBaselineOf="@id/edtGridWidth"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/edtGridWidth" />
 
         <Button
             android:id="@+id/btnOK"
@@ -56,9 +47,9 @@
             android:text="OK"
             android:textColor="?colorOnPrimary"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="@+id/edtGridHeight"
-            app:layout_constraintStart_toStartOf="@+id/edtGridWidth"
-            app:layout_constraintTop_toBottomOf="@id/edtGridHeight" />
+            app:layout_constraintEnd_toEndOf="@+id/edtGridScaleStep"
+            app:layout_constraintStart_toStartOf="@+id/edtGridScaleStep"
+            app:layout_constraintTop_toBottomOf="@id/edtGridScaleStep" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

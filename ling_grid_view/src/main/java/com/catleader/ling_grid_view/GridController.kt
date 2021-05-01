@@ -13,6 +13,7 @@ import kotlin.math.acos
 class GridController @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
+
     private val tag = "GridController"
 
     init {
@@ -20,8 +21,6 @@ class GridController @JvmOverloads constructor(
     }
 
     lateinit var lingGridContract: LingGridContract
-
-    private var startedGridUISize = GridUISize()
 
     private var startedRotatedDegrees: Float = 0f
 
@@ -40,11 +39,9 @@ class GridController @JvmOverloads constructor(
             MotionEvent.ACTION_DOWN -> {
                 if (!::lingGridContract.isInitialized) return false
 
-                startedRotatedDegrees = lingGridContract.getStartedRotatedDegree()
+                startedRotatedDegrees = lingGridContract.getGridUiRotation()
 
-                centerPoint.set(lingGridContract.getGridUICenter())
-
-                startedGridUISize = lingGridContract.getStatedGridUISize()
+                centerPoint.set(lingGridContract.getGridUiCenterPoint())
 
                 val gclp = layoutParams as FrameLayout.LayoutParams
 
@@ -71,7 +68,7 @@ class GridController @JvmOverloads constructor(
     }
 
     /**
-     * Calculate rotation using vector equation
+     * Get angle between two points using vector dot product equation
      */
     private fun handleSizeAndRotation(center: PointF, started: PointF, ended: PointF) {
         val centerStartedLength = getVectorAmplitude(center, started)

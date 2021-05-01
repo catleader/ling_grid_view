@@ -5,5 +5,7 @@
         <attr name="gridBgColor" format="color"/>
         <attr name="gridColumnCount" format="integer"/>
         <attr name="gridRowCount" format="integer"/>
+        <attr name="gridScaleStep" format="integer"/>
+        <attr name="showGridScaleLabel" format="boolean"/>
     </declare-styleable>
 </resources>
