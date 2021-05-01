@@ -7,54 +7,41 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <Button
+        android:id="@+id/btnCustomGridScaleStep"
+        android:layout_width="128dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|top"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="152dp"
+        android:text="Chang Grid Scale" />
 
     <Button
         android:id="@+id/btnCustomGridSize"
-        android:layout_width="wrap_content"
+        android:layout_width="128dp"
         android:layout_height="wrap_content"
         android:layout_gravity="end|top"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
-        android:text="Custom GridSize" />
+        android:text="Change GridSize" />
 
     <Button
         android:id="@+id/btnToggleGridScaleLabel"
-        android:layout_width="wrap_content"
+        android:layout_width="128dp"
         android:layout_height="wrap_content"
         android:layout_gravity="end|top"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="192dp"
+        android:layout_marginTop="72dp"
+        android:layout_marginEnd="152dp"
         android:text="Hide grid scale" />
 
     <Button
-        android:id="@+id/btnCustomGridScaleStep"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="end|top"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="64dp"
-        android:layout_marginEnd="192dp"
-        android:text="Custom GridScale" />
-
-    <Button
-        android:id="@+id/btnToggleMapType"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="end|top"
-        android:layout_marginTop="64dp"
-        android:layout_marginEnd="16dp"
-        android:text="Toggle MapType" />
-
-    <Button
         android:id="@+id/btnCenterGrid"
-        android:layout_width="wrap_content"
+        android:layout_width="128dp"
         android:layout_height="wrap_content"
         android:layout_gravity="end|top"
-        android:layout_marginTop="108dp"
+        android:layout_marginTop="72dp"
         android:layout_marginEnd="16dp"
         android:text="Center grid" />
-
 
     <com.catleader.ling_grid_view.LingGridView
         android:id="@+id/lingGridView"
@@ -65,7 +52,8 @@
         app:gridColumnCount="16"
         app:gridRowCount="16"
         app:showGridScaleLabel="true"
-        app:gridScaleStep="4"/>
+        app:gridScaleHorizontalStep="4"
+        app:gridScaleVerticalStep="2"/>
 
     <fragment
         android:id="@+id/map"

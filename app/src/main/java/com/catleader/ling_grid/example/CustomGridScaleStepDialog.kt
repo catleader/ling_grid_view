@@ -6,22 +6,28 @@ import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.view.LayoutInflater
 import android.view.View
+import android.view.View.OnFocusChangeListener
 import android.view.Window
+import android.view.WindowManager
+import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
 import com.catleader.ling_grid_view.LingGridView
 
+
 class CustomGridScaleStepDialog private constructor(
     private val context: Context,
-    onValueSet: ((gridScale: Int) -> Unit)? = null
+    onValueSet: ((gridScaleHorizontal: Int, gridScaleVertical: Int) -> Unit)? = null
 ) {
 
     companion object {
         fun getInstance(
             context: Context,
-            onValueSet: ((gridScale: Int) -> Unit)? = null,
-        ): CustomGridScaleStepDialog = CustomGridScaleStepDialog(context, onValueSet)
+            onValueSet: ((gridScaleHorizontal: Int, gridScaleVertical: Int) -> Unit)? = null,
+        ): CustomGridScaleStepDialog =
+            CustomGridScaleStepDialog(context, onValueSet)
     }
+
 
     private val dialog: Dialog by lazy {
         dialogView =
@@ -35,30 +41,96 @@ class CustomGridScaleStepDialog private constructor(
         dialog
     }
 
+    var gridSizeInMeters: Pair<Int, Int>? = null
+
+    private var edtGridScaleHorizontalStep: EditText =
+        dialog.findViewById(R.id.edtGridScaleHorizontalStep)
+
+    private var edtGridScaleVerticalStep: EditText =
+        dialog.findViewById(R.id.edtGridScaleVerticalStep)
+
+    private var btnOK: Button = dialog.findViewById(R.id.btnOK)
+
+    fun setCurrentGridScale(horizonScale: Int, verticalScale: Int) {
+        edtGridScaleHorizontalStep.setText(horizonScale.toString())
+        edtGridScaleVerticalStep.setText(verticalScale.toString())
+    }
+
+    fun clearError() {
+        edtGridScaleHorizontalStep.error = null
+        edtGridScaleVerticalStep.error = null
+    }
+
     init {
 
-        val edtGridScale = dialog.findViewById<EditText>(R.id.edtGridScaleStep)
+        edtGridScaleHorizontalStep.onFocusChangeListener = OnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                dialog.window!!.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE)
+            }
+        }
 
+        btnOK.setOnClickListener {
+            val gridWidth = gridSizeInMeters?.first
 
-        dialog.findViewById<Button>(R.id.btnOK)?.setOnClickListener {
-            val gridScaleStep = edtGridScale.text.toString().toIntOrNull()
+            val gridHeight = gridSizeInMeters?.second
+
+            if (gridWidth == null) {
+                return@setOnClickListener
+            }
+
+            if (gridHeight == null) {
+                return@setOnClickListener
+            }
+
+            val gridScaleHorizontal = edtGridScaleHorizontalStep.text.toString().toIntOrNull()
+
+            val gridScaleVertical = edtGridScaleVerticalStep.text.toString().toIntOrNull()
 
             var error = false
 
-            if (gridScaleStep == null) {
-                edtGridScale.error = "need value"
+
+            if (gridScaleHorizontal == null) {
+                edtGridScaleHorizontalStep.error = "need value"
                 error = true
             }
 
-            if (gridScaleStep !in 1..LingGridView.maxGridSizePossibleInMeter) {
-                edtGridScale.error = "value must be 1..${LingGridView.maxGridSizePossibleInMeter}"
+            if (gridScaleVertical == null) {
+                edtGridScaleVerticalStep.error = "need value"
+                error = true
+            }
+
+            if (gridScaleHorizontal !in 1..LingGridView.maxGridSizePossibleInMeter) {
+                edtGridScaleHorizontalStep.error =
+                    "value must be 1..${LingGridView.maxGridSizePossibleInMeter}"
+                error = true
+
+            }
+
+            if (gridScaleVertical !in 1..LingGridView.maxGridSizePossibleInMeter) {
+                edtGridScaleVerticalStep.error =
+                    "value must be 1..${LingGridView.maxGridSizePossibleInMeter}"
+                error = true
+            }
+
+            if (gridScaleHorizontal != null && gridWidth % gridScaleHorizontal != 0) {
+                edtGridScaleHorizontalStep.error =
+                    "grid scale value must be dividable by grid's width."
+                error = true
+            }
+
+
+            if (gridScaleVertical != null && gridHeight % gridScaleVertical != 0) {
+                edtGridScaleVerticalStep.error =
+                    "grid scale value must be dividable by grid's height."
                 error = true
             }
 
             if (error) return@setOnClickListener
 
-
-            onValueSet?.invoke(gridScaleStep!!)
+            if (gridScaleVertical != null && gridScaleHorizontal != null) {
+                onValueSet?.invoke(gridScaleHorizontal, gridScaleVertical)
+                hide()
+            }
         }
 
     }
@@ -67,6 +139,8 @@ class CustomGridScaleStepDialog private constructor(
 
     fun show() {
         if (!dialog.isShowing) dialog.show()
+        edtGridScaleHorizontalStep.setSelection(edtGridScaleHorizontalStep.text.length)
+        edtGridScaleHorizontalStep.requestFocus()
     }
 
     fun hide() {

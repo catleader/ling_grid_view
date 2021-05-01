@@ -7,6 +7,7 @@ import android.graphics.drawable.ColorDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.Window
+import android.view.WindowManager
 import android.widget.Button
 import android.widget.EditText
 import com.catleader.ling_grid_view.LingGridView
@@ -34,11 +35,22 @@ class CustomGridSizeDialog private constructor(
         dialog
     }
 
+
+    private val edtGw: EditText = dialog.findViewById(R.id.edtGridWidth)
+
+    private val edtGh: EditText = dialog.findViewById(R.id.edtGridHeight)
+
+    fun setCurrentGridSize(gridSize: Pair<Int, Int>) {
+        edtGw.setText(gridSize.first.toString())
+        edtGh.setText(gridSize.second.toString())
+    }
+
     init {
-
-        val edtGw = dialog.findViewById<EditText>(R.id.edtGridWidth)
-
-        val edtGh = dialog.findViewById<EditText>(R.id.edtGridHeight)
+        edtGw.onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                dialog.window!!.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE)
+            }
+        }
 
         dialog.findViewById<Button>(R.id.btnOK)?.setOnClickListener {
             val gw = edtGw.text.toString().toIntOrNull()
@@ -71,14 +83,23 @@ class CustomGridSizeDialog private constructor(
             if (error) return@setOnClickListener
 
             onValueSet?.invoke(gw!!, gh!!)
+            hide()
+
         }
 
     }
 
     private var dialogView: View? = null
 
+    fun clearError() {
+        edtGh.error = null
+        edtGw.error = null
+    }
+
     fun show() {
         if (!dialog.isShowing) dialog.show()
+        edtGw.requestFocus()
+        edtGw.setSelection(edtGw.text.length)
     }
 
     fun hide() {

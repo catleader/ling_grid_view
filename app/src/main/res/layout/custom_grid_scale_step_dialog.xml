@@ -21,20 +21,39 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <EditText
-            android:id="@+id/edtGridScaleStep"
+            android:id="@+id/edtGridScaleHorizontalStep"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginTop="16dp"
             android:layout_marginEnd="16dp"
-            android:hint="grid scale step"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:hint="grid scale horizontal step"
+            android:imeOptions="actionNext"
+            android:inputType="number"
+            android:nextFocusRight="@id/edtGridHeight"
+            app:layout_constraintBottom_toTopOf="@id/edtGridScaleVerticalStep"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvHint" />
+
+
+        <EditText
+            android:id="@+id/edtGridScaleVerticalStep"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="16dp"
+            android:hint="grid scale vertical step"
             android:imeOptions="actionNext"
             android:inputType="number"
             android:nextFocusRight="@id/edtGridHeight"
             app:layout_constraintBottom_toTopOf="@id/btnOK"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvHint" />
+            app:layout_constraintTop_toBottomOf="@id/edtGridScaleHorizontalStep" />
 
 
         <Button
@@ -47,9 +66,9 @@
             android:text="OK"
             android:textColor="?colorOnPrimary"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="@+id/edtGridScaleStep"
-            app:layout_constraintStart_toStartOf="@+id/edtGridScaleStep"
-            app:layout_constraintTop_toBottomOf="@id/edtGridScaleStep" />
+            app:layout_constraintEnd_toEndOf="@+id/edtGridScaleVerticalStep"
+            app:layout_constraintStart_toStartOf="@+id/edtGridScaleVerticalStep"
+            app:layout_constraintTop_toBottomOf="@id/edtGridScaleVerticalStep" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

@@ -26,10 +26,21 @@ class LingGridView @JvmOverloads constructor(
      */
     var gridSizeMeters = Pair(16, 16)
         set(value) {
-            if (value.first > 0 && value.second > 0
-                && value.first <= maxGridSizePossibleInMeter && value.second <= maxGridSizePossibleInMeter
+            if (
+                value.first > 0 &&
+                value.second > 0 &&
+                value.first <= maxGridSizePossibleInMeter &&
+                value.second <= maxGridSizePossibleInMeter
             ) {
                 field = value
+                if (value.first % gridScaleHorizontalStep != 0) {
+                    gridScaleHorizontalStep = 1
+                }
+
+                if (value.second % gridScaleVerticalStep != 0) {
+                    gridScaleVerticalStep = 1
+                }
+
                 handleMapChange(gridUi.rotation)
             }
         }
@@ -63,13 +74,29 @@ class LingGridView @JvmOverloads constructor(
         }
 
     /**
-     * Set grid scale step
+     * Set grid scale horizontal step
      */
-    var gridScaleStep: Int = 1
+    var gridScaleHorizontalStep: Int = 1
         set(value) {
-            if (value in 1..maxGridSizePossibleInMeter) {
+            if (value in 1..maxGridSizePossibleInMeter
+                && (gridSizeMeters.first % value == 0)
+            ) {
                 field = value
-                gridUi.gridScaleStep = value
+                gridUi.gridScaleHorizontalStep = value
+            }
+        }
+
+
+    /**
+     * Set grid scale vertical step
+     */
+    var gridScaleVerticalStep: Int = 1
+        set(value) {
+            if (value in 1..maxGridSizePossibleInMeter
+                && (gridSizeMeters.second % value == 0)
+            ) {
+                field = value
+                gridUi.gridScaleVerticalStep = value
             }
         }
 
@@ -143,7 +170,11 @@ class LingGridView @JvmOverloads constructor(
                     getInteger(R.styleable.LingGridView_gridRowCount, 16)
                 )
 
-                gridScaleStep = getInteger(R.styleable.LingGridView_gridScaleStep, 1)
+                gridScaleHorizontalStep =
+                    getInteger(R.styleable.LingGridView_gridScaleHorizontalStep, 1)
+
+                gridScaleVerticalStep =
+                    getInteger(R.styleable.LingGridView_gridScaleVerticalStep, 1)
 
                 showGridScaleLabel = getBoolean(R.styleable.LingGridView_showGridScaleLabel, true)
 
@@ -180,7 +211,8 @@ class LingGridView @JvmOverloads constructor(
             gridBackgroundColor = state.gridBackgroundColor
             gridLineColor = state.gridLineColor
             showGridScaleLabel = state.showGridScaleLabel == 1
-            gridScaleStep = state.gridScaleStep
+            gridScaleHorizontalStep = state.gridScaleHorizontalStep
+            gridScaleVerticalStep = state.gridScaleVerticalStep
             handleMapChange(state.gridRotation)
             stateToBeRestored = null
         } else {
@@ -336,10 +368,10 @@ class LingGridView @JvmOverloads constructor(
         val gh = gridSizeMeters.second
 
         return when {
-            gw >= 100 || gh >= 100 -> 15f
-            gw >= 50 || gh >= 50 -> 16f
-            gw >= 25 || gh >= 25 -> 17f
-            else -> 18f
+            gw >= 100 || gh >= 100 -> 15.8f
+            gw >= 50 || gh >= 50 -> 16.8f
+            gw >= 25 || gh >= 25 -> 17.8f
+            else -> 18.8f
         }
     }
 
@@ -354,6 +386,7 @@ class LingGridView @JvmOverloads constructor(
         val zoomLevel = gMap.cameraPosition.zoom
 
         gridUi.mapZoomLevel = zoomLevel
+        Log.d(tag, "zoomLevel: $zoomLevel")
 
         if (zoomLevel >= getZoomLevelForToolingVisibilities()) {
             gridController.visibility = View.VISIBLE
@@ -445,7 +478,8 @@ class LingGridView @JvmOverloads constructor(
         state.gridBackgroundColor = gridBackgroundColor
         state.gridLineColor = gridLineColor
         state.showGridScaleLabel = if (showGridScaleLabel) 1 else 0
-        state.gridScaleStep = gridScaleStep
+        state.gridScaleHorizontalStep = gridScaleHorizontalStep
+        state.gridScaleVerticalStep = gridScaleVerticalStep
         return state
     }
 
@@ -471,7 +505,8 @@ class LingGridView @JvmOverloads constructor(
         var gridBackgroundColor: Int = Color.GRAY
         var gridLineColor: Int = Color.WHITE
         var showGridScaleLabel: Int = 0
-        var gridScaleStep: Int = 1
+        var gridScaleHorizontalStep: Int = 1
+        var gridScaleVerticalStep: Int = 1
 
         constructor(superState: Parcelable?) : super(superState)
 
@@ -484,7 +519,8 @@ class LingGridView @JvmOverloads constructor(
             gridBackgroundColor = parcel.readInt()
             gridLineColor = parcel.readInt()
             showGridScaleLabel = parcel.readInt()
-            gridScaleStep = parcel.readInt()
+            gridScaleHorizontalStep = parcel.readInt()
+            gridScaleVerticalStep = parcel.readInt()
         }
 
         override fun writeToParcel(parcel: Parcel, flags: Int) {
@@ -497,7 +533,8 @@ class LingGridView @JvmOverloads constructor(
             parcel.writeInt(gridBackgroundColor)
             parcel.writeInt(gridLineColor)
             parcel.writeInt(showGridScaleLabel)
-            parcel.writeInt(gridScaleStep)
+            parcel.writeInt(gridScaleHorizontalStep)
+            parcel.writeInt(gridScaleVerticalStep)
         }
 
         override fun describeContents(): Int {

@@ -53,7 +53,13 @@ class GridUI @JvmOverloads constructor(
             }
         }
 
-    var gridScaleStep: Int = 1
+    var gridScaleHorizontalStep: Int = 1
+        set(value) {
+            field = value
+            invalidate()
+        }
+
+    var gridScaleVerticalStep: Int = 1
         set(value) {
             field = value
             invalidate()
@@ -148,7 +154,7 @@ class GridUI @JvmOverloads constructor(
 
                 for (i in 1..gridWidthSizeInMeters) {
                     if (i < gridWidthSizeInMeters) {
-                        if (i % gridScaleStep == 0) {
+                        if (i % gridScaleHorizontalStep == 0) {
                             drawLine(
                                 extraPadding + i * pixelsPerMeter,
                                 extraPadding.toFloat(),
@@ -167,7 +173,7 @@ class GridUI @JvmOverloads constructor(
 
                         textHeight = textBounds.height().toFloat()
 
-                        if (i % gridScaleStep == 0) {
+                        if (i % gridScaleHorizontalStep == 0) {
                             drawText(
                                 "$i",
                                 extraPadding + i * pixelsPerMeter,
@@ -177,7 +183,7 @@ class GridUI @JvmOverloads constructor(
                         }
 
                         val label = gridWidthSizeInMeters - i + 1
-                        if (label % gridScaleStep == 0) {
+                        if (label % gridScaleHorizontalStep == 0) {
                             drawText(
                                 "$label",
                                 extraPadding + (i - 1) * pixelsPerMeter,
@@ -192,7 +198,7 @@ class GridUI @JvmOverloads constructor(
                 for (i in 1..gridHeightSizeInMeters) {
                     if (i < gridHeightSizeInMeters) {
 
-                        if (i % gridScaleStep == 0) {
+                        if (i % gridScaleVerticalStep == 0) {
                             drawLine(
                                 extraPadding.toFloat(),
                                 extraPadding + i * pixelsPerMeter,
@@ -214,7 +220,7 @@ class GridUI @JvmOverloads constructor(
                         textHeight = textBounds.height().toFloat()
 
 
-                        if (i % gridScaleStep == 0) {
+                        if (i % gridScaleVerticalStep == 0) {
                             drawText(
                                 "$i",
                                 extraPadding / 2f,
@@ -224,7 +230,7 @@ class GridUI @JvmOverloads constructor(
                         }
 
                         val label = gridHeightSizeInMeters - i + 1
-                        if (label % gridScaleStep == 0) {
+                        if (label % gridScaleVerticalStep == 0) {
                             drawText(
                                 "$label",
                                 width - extraPadding / 2f,

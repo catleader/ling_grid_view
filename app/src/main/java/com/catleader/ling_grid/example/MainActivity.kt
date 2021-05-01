@@ -22,15 +22,16 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private val gridSizeDialog: CustomGridSizeDialog by lazy {
         CustomGridSizeDialog.getInstance(this) { gw, gh ->
-            gridSizeDialog.hide()
             lingGridView.gridSizeMeters = Pair(gw, gh)
         }
     }
 
-    private val gridScaleStepDialog: CustomGridScaleStepDialog by lazy {
-        CustomGridScaleStepDialog.getInstance(this) { gridScale ->
-            gridScaleStepDialog.hide()
-            lingGridView.gridScaleStep = gridScale
+    private val gridScaleDialog: CustomGridScaleStepDialog by lazy {
+        CustomGridScaleStepDialog.getInstance(
+            this,
+        ) { gridScaleHorizontal, gridScaleVertical ->
+            lingGridView.gridScaleHorizontalStep = gridScaleHorizontal
+            lingGridView.gridScaleVerticalStep = gridScaleVertical
         }
     }
 
@@ -44,11 +45,19 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         mapFragment.getMapAsync(this)
 
         binding.btnCustomGridSize.setOnClickListener {
+            gridSizeDialog.clearError()
+            gridSizeDialog.setCurrentGridSize(gridSize = lingGridView.gridSizeMeters)
             gridSizeDialog.show()
         }
 
         binding.btnCustomGridScaleStep.setOnClickListener {
-            gridScaleStepDialog.show()
+            gridScaleDialog.gridSizeInMeters = lingGridView.gridSizeMeters
+            gridScaleDialog.setCurrentGridScale(
+                horizonScale = lingGridView.gridScaleHorizontalStep,
+                verticalScale = lingGridView.gridScaleVerticalStep,
+            )
+            gridScaleDialog.clearError()
+            gridScaleDialog.show()
         }
 
         binding.btnToggleGridScaleLabel.setOnClickListener {
@@ -58,14 +67,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             } else {
                 lingGridView.showGridScaleLabel = true
                 binding.btnToggleGridScaleLabel.text = "Hide grid scale"
-            }
-        }
-
-        binding.btnToggleMapType.setOnClickListener {
-            if (map.mapType == GoogleMap.MAP_TYPE_SATELLITE) {
-                map.mapType = GoogleMap.MAP_TYPE_NORMAL
-            } else {
-                map.mapType = GoogleMap.MAP_TYPE_SATELLITE
             }
         }
 
