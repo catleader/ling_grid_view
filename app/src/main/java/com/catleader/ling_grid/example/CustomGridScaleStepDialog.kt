@@ -114,14 +114,14 @@ class CustomGridScaleStepDialog private constructor(
 
             if (gridScaleHorizontal != null && gridWidth % gridScaleHorizontal != 0) {
                 edtGridScaleHorizontalStep.error =
-                    "grid scale value must be dividable by grid's width."
+                    "Grid's width must be divisible by grid scale value."
                 error = true
             }
 
 
             if (gridScaleVertical != null && gridHeight % gridScaleVertical != 0) {
                 edtGridScaleVerticalStep.error =
-                    "grid scale value must be dividable by grid's height."
+                    "Grid's height must be divisible by grid scale value."
                 error = true
             }
 
