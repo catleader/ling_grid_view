@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/root"
@@ -11,57 +11,68 @@
         android:id="@+id/btnCustomGridScaleStep"
         android:layout_width="128dp"
         android:layout_height="wrap_content"
-        android:layout_gravity="end|top"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="152dp"
-        android:text="Chang Grid Scale" />
+        android:layout_marginEnd="12dp"
+        android:text="Chang Grid Scale"
+        app:layout_constraintBottom_toTopOf="@id/btnToggleGridScaleLabel"
+        app:layout_constraintEnd_toStartOf="@id/btnCustomGridSize" />
 
     <Button
         android:id="@+id/btnCustomGridSize"
         android:layout_width="128dp"
         android:layout_height="wrap_content"
         android:layout_gravity="end|top"
-        android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
-        android:text="Change GridSize" />
+        android:text="Change GridSize"
+        app:layout_constraintBottom_toTopOf="@id/btnCenterGrid"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <Button
         android:id="@+id/btnToggleGridScaleLabel"
         android:layout_width="128dp"
         android:layout_height="wrap_content"
-        android:layout_gravity="end|top"
-        android:layout_marginTop="72dp"
-        android:layout_marginEnd="152dp"
-        android:text="Hide grid scale" />
+        android:layout_marginEnd="12dp"
+        android:layout_marginBottom="16dp"
+        android:text="Hide grid scale"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/btnCenterGrid" />
 
     <Button
         android:id="@+id/btnCenterGrid"
         android:layout_width="128dp"
         android:layout_height="wrap_content"
-        android:layout_gravity="end|top"
-        android:layout_marginTop="72dp"
         android:layout_marginEnd="16dp"
-        android:text="Center grid" />
+        android:layout_marginBottom="16dp"
+        android:text="Center grid"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <com.catleader.ling_grid_view.LingGridView
         android:id="@+id/lingGridView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:gridBgColor="#3200BAF1"
-        app:gridLineColor="#FFFFFFFF"
         app:gridColumnCount="16"
+        app:gridLineColor="#FFFFFFFF"
         app:gridRowCount="16"
-        app:showGridScaleLabel="true"
         app:gridScaleHorizontalStep="4"
-        app:gridScaleVerticalStep="2"/>
+        app:gridScaleVerticalStep="2"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:showGridScaleLabel="true" />
 
     <fragment
         android:id="@+id/map"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         tools:context=".MapsActivity" />
 
 
-</FrameLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
 

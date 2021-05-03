@@ -1,5 +1,7 @@
 package com.catleader.ling_grid.example
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.catleader.ling_grid.example.databinding.ActivityMainBinding
@@ -8,6 +10,7 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.tbruyelle.rxpermissions3.RxPermissions
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -33,6 +36,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             lingGridView.gridScaleHorizontalStep = gridScaleHorizontal
             lingGridView.gridScaleVerticalStep = gridScaleVertical
         }
+    }
+
+    private val rxPermissions: RxPermissions by lazy {
+        RxPermissions(this)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -74,6 +81,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             lingGridView.relocateGridToCenterOfMap()
         }
 
+
     }
 
     private var latestGridLatLng: LatLng? = null
@@ -92,12 +100,16 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onSaveInstanceState(outState)
     }
 
+    @SuppressLint("MissingPermission")
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
+
+
         map.mapType = GoogleMap.MAP_TYPE_SATELLITE
         map.uiSettings.apply {
             isTiltGesturesEnabled = false
             isRotateGesturesEnabled = true
+            isMyLocationButtonEnabled = true
         }
 
         val step = LatLng(18.7649001, 98.9362624)
@@ -122,6 +134,17 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         map.setOnCameraMoveListener {
             lingGridView.onMapMove()
         }
+
+        rxPermissions
+            .request(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            )
+            .subscribe { granted ->
+                if (granted) {
+                    map.isMyLocationEnabled = true
+                }
+            }
 
     }
 
