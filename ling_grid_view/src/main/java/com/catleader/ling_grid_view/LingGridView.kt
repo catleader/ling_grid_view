@@ -552,7 +552,7 @@ class LingGridView @JvmOverloads constructor(
     }
 
     companion object {
-        const val maxGridSizePossibleInMeter = 200
+        const val maxGridSizePossibleInMeter = 500
 
         fun getVectorAmplitude(a: PointF, b: PointF): Float {
             return sqrt((b.x - a.x).pow(2) + (b.y - a.y).pow(2))
