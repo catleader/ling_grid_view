@@ -12,6 +12,8 @@ class GridUI @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
+    private val gridLineBoldRepeatPeriod: Int = 5
+
     private val tag = "GridUI"
 
     var extraPadding: Int = 0
@@ -63,6 +65,18 @@ class GridUI @JvmOverloads constructor(
             invalidate()
         }
 
+    var gridScaleHorizontalStepMultiplier: Int = 1
+        set(value) {
+            field = value
+            invalidate()
+        }
+
+    var gridScaleVerticalStepMultiplier: Int = 1
+        set(value) {
+            field = value
+            invalidate()
+        }
+
     var mapZoomLevel = 19f
 
     private var pixelsPerMeter = 0f
@@ -76,9 +90,15 @@ class GridUI @JvmOverloads constructor(
     private val rect = Rect()
 
     private var gridLinePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#fff0c929")
+        color = Color.parseColor("#80f0c929")
         style = Paint.Style.STROKE
         strokeWidth = context.resources.displayMetrics.density
+    }
+
+    private var gridLinePaintBold = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#80d8c83e")
+        style = Paint.Style.STROKE
+        strokeWidth = context.resources.displayMetrics.density * 2
     }
 
     private var gridBgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -86,20 +106,20 @@ class GridUI @JvmOverloads constructor(
         style = Paint.Style.FILL
     }
 
-    private var rectBgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#40000000")
+    private var scaleBgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#1A000000")
         style = Paint.Style.STROKE
         strokeWidth = extraPadding.toFloat() * 2
     }
 
     private val textPaintNormal = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.WHITE
+        color = Color.parseColor("#E6ffffff")
         textSize = context.resources.displayMetrics.density * 10f
         textAlign = Paint.Align.CENTER
     }
 
     private val textPaintSmall = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.WHITE
+        color = Color.parseColor("#E6ffffff")
         textSize = context.resources.displayMetrics.density * 9f
         textAlign = Paint.Align.CENTER
     }
@@ -111,6 +131,11 @@ class GridUI @JvmOverloads constructor(
 
         with(canvas) {
             var extraPadding2Times = extraPadding * 2
+
+            val gridScaleHorizontalStep =
+                gridScaleHorizontalStep * gridScaleHorizontalStepMultiplier
+
+            val gridScaleVerticalStep = gridScaleVerticalStep * gridScaleVerticalStepMultiplier
 
             if (showGridScaleLabel) {
                 rect.set(
@@ -128,117 +153,125 @@ class GridUI @JvmOverloads constructor(
                 extraPadding2Times = 0
             }
 
-            drawRect(rect, gridLinePaint)
+            // drawRect(rect, gridLinePaint)
 
             drawRect(rect, gridBgPaint)
 
-            if (mapZoomLevel >= contact.getZoomLevelForGridLineDrawing()) {
 
-                rect.set(0, 0, width, height)
+            rect.set(0, 0, width, height)
 
-                if (showGridScaleLabel) drawRect(rect, rectBgPaint)
+            if (showGridScaleLabel) drawRect(rect, scaleBgPaint)
 
-                val gridWidthSizeInMeters = contact.getGridSizeInMeters().first
+            val gridWidthSizeInMeters = contact.getGridSizeInMeters().first
 
-                pixelsPerMeter = (width - extraPadding2Times) / gridWidthSizeInMeters.toFloat()
+            pixelsPerMeter = (width - extraPadding2Times) / gridWidthSizeInMeters.toFloat()
 
-                val gridWidth = (width - extraPadding2Times).toFloat()
+            val gridWidth = (width - extraPadding2Times).toFloat()
 
-                val gridHeightSizeInMeters = contact.getGridSizeInMeters().second
+            val gridHeightSizeInMeters = contact.getGridSizeInMeters().second
 
-                val gridHeight = (height - extraPadding2Times).toFloat()
+            val gridHeight = (height - extraPadding2Times).toFloat()
 
-                for (i in 1..gridWidthSizeInMeters) {
-                    if (i < gridWidthSizeInMeters) {
-                        if (i % gridScaleHorizontalStep == 0) {
-                            drawLine(
-                                extraPadding + i * pixelsPerMeter,
-                                extraPadding.toFloat(),
-                                extraPadding + i * pixelsPerMeter,
-                                extraPadding + gridHeight,
-                                gridLinePaint
-                            )
-                        }
-                    }
-
-                    if (showGridScaleLabel) {
-                        val textPaint = if (i < 10) textPaintNormal else textPaintSmall
-                        textWidth = textPaint.measureText("$i")
-
-                        textPaint.getTextBounds("$i", 0, "$i".length, textBounds)
-
-                        textHeight = textBounds.height().toFloat()
-
-                        if (i % gridScaleHorizontalStep == 0) {
-                            drawText(
-                                "$i",
-                                extraPadding + i * pixelsPerMeter,
-                                extraPadding.toFloat() - (extraPadding - textHeight) / 2f,
-                                textPaint
-                            )
-                        }
-
-                        val label = gridWidthSizeInMeters - i + 1
-                        if (label % gridScaleHorizontalStep == 0) {
-                            drawText(
-                                "$label",
-                                extraPadding + (i - 1) * pixelsPerMeter,
-                                height - (extraPadding - textHeight) / 2f,
-                                textPaint
-                            )
-                        }
-
-                    }
+            for (i in 0..gridWidthSizeInMeters) {
+                if (i % gridScaleHorizontalStep == 0) {
+                    drawLine(
+                        extraPadding + i * pixelsPerMeter,
+                        extraPadding.toFloat(),
+                        extraPadding + i * pixelsPerMeter,
+                        extraPadding + gridHeight,
+                        if (i == 0 || i % gridLineBoldRepeatPeriod == 0) gridLinePaintBold else gridLinePaint
+                    )
+                } else if (i == gridWidthSizeInMeters) {
+                    drawLine(
+                        extraPadding + i * pixelsPerMeter,
+                        extraPadding.toFloat(),
+                        extraPadding + i * pixelsPerMeter,
+                        extraPadding + gridHeight,
+                        gridLinePaint
+                    )
                 }
 
-                for (i in 1..gridHeightSizeInMeters) {
-                    if (i < gridHeightSizeInMeters) {
+                if (showGridScaleLabel) {
+                    val textPaint = if (i < 10) textPaintNormal else textPaintSmall
+                    textWidth = textPaint.measureText("$i")
 
-                        if (i % gridScaleVerticalStep == 0) {
-                            drawLine(
-                                extraPadding.toFloat(),
-                                extraPadding + i * pixelsPerMeter,
-                                gridWidth + extraPadding,
-                                extraPadding + i * pixelsPerMeter,
-                                gridLinePaint
-                            )
-                        }
+                    textPaint.getTextBounds("$i", 0, "$i".length, textBounds)
+
+                    textHeight = textBounds.height().toFloat()
+
+                    if (i == gridWidthSizeInMeters || (i != 0 && i % gridScaleHorizontalStep == 0)) {
+                        drawText(
+                            "$i",
+                            extraPadding + i * pixelsPerMeter,
+                            extraPadding.toFloat() - (extraPadding - textHeight) / 2f,
+                            textPaint
+                        )
                     }
 
-                    if (showGridScaleLabel) {
-
-                        val textPaint = if (i < 10) textPaintNormal else textPaintSmall
-
-                        textWidth = textPaint.measureText("$i")
-
-                        textPaint.getTextBounds("$i", 0, "$i".length, textBounds)
-
-                        textHeight = textBounds.height().toFloat()
-
-
-                        if (i % gridScaleVerticalStep == 0) {
-                            drawText(
-                                "$i",
-                                extraPadding / 2f,
-                                (extraPadding + i * pixelsPerMeter) + textHeight / 2,
-                                textPaint
-                            )
-                        }
-
-                        val label = gridHeightSizeInMeters - i + 1
-                        if (label % gridScaleVerticalStep == 0) {
-                            drawText(
-                                "$label",
-                                width - extraPadding / 2f,
-                                (extraPadding + (i - 1) * pixelsPerMeter) + textHeight / 2,
-                                textPaint
-                            )
-                        }
-
+                    val label = gridWidthSizeInMeters - i
+                    if (label != 0 && i % gridScaleHorizontalStep == 0) {
+                        drawText(
+                            "$label",
+                            extraPadding + i * pixelsPerMeter,
+                            height - (extraPadding - textHeight) / 2f,
+                            textPaint
+                        )
                     }
+
+
                 }
-
             }
+
+            for (i in 0..gridHeightSizeInMeters) {
+                if (i % gridScaleVerticalStep == 0) {
+                    drawLine(
+                        extraPadding.toFloat(),
+                        extraPadding + i * pixelsPerMeter,
+                        gridWidth + extraPadding,
+                        extraPadding + i * pixelsPerMeter,
+                        if (i == 0 || i % gridLineBoldRepeatPeriod == 0) gridLinePaintBold else gridLinePaint
+                    )
+                } else if (i == gridHeightSizeInMeters) {
+                    drawLine(
+                        extraPadding.toFloat(),
+                        extraPadding + i * pixelsPerMeter,
+                        gridWidth + extraPadding,
+                        extraPadding + i * pixelsPerMeter,
+                        gridLinePaint
+                    )
+                }
+
+                if (showGridScaleLabel) {
+
+                    val textPaint = if (i < 10) textPaintNormal else textPaintSmall
+
+                    textWidth = textPaint.measureText("$i")
+
+                    textPaint.getTextBounds("$i", 0, "$i".length, textBounds)
+
+                    textHeight = textBounds.height().toFloat()
+
+                    if (i == gridHeightSizeInMeters || (i != 0 && i % gridScaleVerticalStep == 0)) {
+                        drawText(
+                            "$i",
+                            extraPadding / 2f,
+                            (extraPadding + i * pixelsPerMeter) + textHeight / 2,
+                            textPaint
+                        )
+                    }
+                    val label = gridHeightSizeInMeters - i
+                    if (label != 0 && i % gridScaleVerticalStep == 0) {
+                        drawText(
+                            "$label",
+                            width - extraPadding / 2f,
+                            (extraPadding + i * pixelsPerMeter) + textHeight / 2,
+                            textPaint
+                        )
+                    }
+
+                }
+            }
+
         }
     }
 

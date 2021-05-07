@@ -22,9 +22,11 @@ class LingGridView @JvmOverloads constructor(
 ) : FrameLayout(context, attrs, defStyleAttr), LingGridContract {
 
     /**
-     * width and height in meters
+     * Grid's width and height in meters
+     * @throws LingGridException.HorizontalGridSizeMustGreaterOrEqualItsScale
+     * @throws LingGridException.VerticalGridSizeMustGreaterOrEqualItsScale
      */
-    var gridSizeMeters = Pair(16, 16)
+    var gridSizeMeters = Pair(24, 24)
         set(value) {
             if (
                 value.first > 0 &&
@@ -32,16 +34,18 @@ class LingGridView @JvmOverloads constructor(
                 value.first <= maxGridSizePossibleInMeter &&
                 value.second <= maxGridSizePossibleInMeter
             ) {
-                field = value
-                if (value.first % gridScaleHorizontalStep != 0) {
-                    gridScaleHorizontalStep = 1
+                when {
+                    value.first < (gridScaleHorizontalStep * gridScaleHorizontalStepMultiplier) -> {
+                        throw LingGridException.HorizontalGridSizeMustGreaterOrEqualItsScale
+                    }
+                    value.second < (gridScaleVerticalStep * gridScaleVerticalStepMultiplier) -> {
+                        throw LingGridException.VerticalGridSizeMustGreaterOrEqualItsScale
+                    }
+                    else -> {
+                        field = value
+                        handleMapChange(gridUi.rotation)
+                    }
                 }
-
-                if (value.second % gridScaleVerticalStep != 0) {
-                    gridScaleVerticalStep = 1
-                }
-
-                handleMapChange(gridUi.rotation)
             }
         }
 
@@ -75,30 +79,130 @@ class LingGridView @JvmOverloads constructor(
 
     /**
      * Set grid scale horizontal step
+     *
+     * @throws LingGridException.HorizontalScaleValueExceed
+     * the given scale is exceed its grid's size or larger than max possible value
+     *
+     * @throws LingGridException.HorizontalScaleTooSmall
+     * scale is too small, it's pointless to draw and violating rules
+     *
+     * @throws LingGridException.HorizontalScaleMustBeEvenWhenZoomedOut
+     * scale must be an even value, so it can be divided by 2 when zooming-in
      */
-    var gridScaleHorizontalStep: Int = 1
+    var gridScaleHorizontalStep: Int = 6
         set(value) {
-            if (value in 1..maxGridSizePossibleInMeter
-                && (gridSizeMeters.first % value == 0)
-            ) {
-                field = value
-                gridUi.gridScaleHorizontalStep = value
+            if (value !in 1..maxGridSizePossibleInMeter || value > gridSizeMeters.first) {
+                throw LingGridException.HorizontalScaleValueExceed
+            }
+
+            when {
+                gridScaleHorizontalStepMultiplier == 1 -> {
+                    // not zoom-out yet, user could set whatever value they want.
+                    field = value
+                    gridUi.gridScaleHorizontalStep = value
+                }
+                value % 2 == 0 -> {
+                    // user change scale when map is zoom-out, also we're making sure the given scale is even
+                    // then we need to find the correct value for scale & its multiplier.
+                    val (scale, multiplier, blockPixelSize) = getCorrectValueForScale(value)
+
+                    if (blockPixelSize <= minimumPixelSizeThreshold) throw LingGridException.HorizontalScaleTooSmall
+
+                    field = scale
+                    gridScaleHorizontalStepMultiplier = multiplier
+                    gridUi.gridScaleHorizontalStep = field
+                }
+                value == 1 -> {
+                    // map is zoom-out but user still want to set to 1 , smh.
+                    throw LingGridException.HorizontalScaleTooSmall
+                }
+                else -> {
+                    // Given scale is not even value.
+                    throw LingGridException.HorizontalScaleMustBeEvenWhenZoomedOut
+                }
             }
         }
 
+    private var gridScaleHorizontalStepMultiplier: Int = 1
+        set(value) {
+            val sumScale = value * gridScaleHorizontalStep
+            if (sumScale in 1..maxGridSizePossibleInMeter && sumScale <= gridSizeMeters.first ) {
+                field = value
+                gridUi.gridScaleHorizontalStepMultiplier = value
+            }
+        }
 
     /**
      * Set grid scale vertical step
+     *
+     * @throws LingGridException.VerticalScaleValueExceed
+     * the given scale is exceed its grid's size or larger than max possible value
+     *
+     * @throws LingGridException.VerticalScaleTooSmall
+     * scale is too small, it's pointless to draw and violating rules
+     *
+     * @throws LingGridException.VerticalScaleMustBeEvenValueZoomedOut
+     * scale must be an even value, so it can be divided by 2 when zooming-in
      */
-    var gridScaleVerticalStep: Int = 1
+    var gridScaleVerticalStep: Int = 6
         set(value) {
-            if (value in 1..maxGridSizePossibleInMeter
-                && (gridSizeMeters.second % value == 0)
-            ) {
-                field = value
-                gridUi.gridScaleVerticalStep = value
+            if (value !in 1..maxGridSizePossibleInMeter || value > gridSizeMeters.second) {
+                throw LingGridException.VerticalScaleValueExceed
+            }
+
+            when {
+                gridScaleVerticalStepMultiplier == 1 -> {
+                    // not zoom-out yet, user could set whatever value they want.
+                    field = value
+                    gridUi.gridScaleVerticalStep = value
+                }
+                value % 2 == 0 -> {
+                    // user change scale when map is zoom-out, also we're making sure the given scale is even
+                    // then we need to find the correct value for scale & its multiplier.
+                    val (scale, multiplier, blockPixelSize) = getCorrectValueForScale(value)
+
+                    if (blockPixelSize <= minimumPixelSizeThreshold) throw LingGridException.VerticalScaleValueExceed
+
+                    field = scale
+                    gridScaleVerticalStepMultiplier = multiplier
+                    gridUi.gridScaleVerticalStep = field
+                }
+                value == 1 -> {
+                    // map is zoom-out but user still want to set to 1 , smh.
+                    throw LingGridException.VerticalScaleTooSmall
+                }
+                else -> {
+                    // Given scale is not even value.
+                    throw LingGridException.VerticalScaleMustBeEvenValueZoomedOut
+                }
             }
         }
+
+    private var gridScaleVerticalStepMultiplier: Int = 1
+        set(value) {
+            val sumScale = value * gridScaleVerticalStep
+            if (sumScale in 1..maxGridSizePossibleInMeter && sumScale <= gridSizeMeters.second) {
+                field = value
+                gridUi.gridScaleVerticalStepMultiplier = value
+            }
+        }
+
+    private fun getCorrectValueForScale(value: Int): Triple<Int, Int, Float> {
+        val pgw = gridUi.width - gridUi.extraPadding * 2f
+
+        var count = 0
+        var scale = value
+        while (scale % 2 == 0) {
+            scale /= 2
+            count++
+        }
+
+        val multiplier = 2.toDouble().pow(count).toInt()
+
+        val blockPixelSize = (pgw / gridSizeMeters.first) * scale * multiplier
+
+        return Triple(scale, multiplier, blockPixelSize)
+    }
 
     private val tag = "LingGridView"
 
@@ -139,6 +243,8 @@ class LingGridView @JvmOverloads constructor(
 
     private var stateToBeRestored: SavedState? = null
 
+    private val minimumPixelSizeThreshold = 30
+
     init {
         elevation = 1 * resources.displayMetrics.density
         gridUi.lingGridContract = this
@@ -166,15 +272,15 @@ class LingGridView @JvmOverloads constructor(
                 )
 
                 gridSizeMeters = Pair(
-                    getInteger(R.styleable.LingGridView_gridColumnCount, 16),
-                    getInteger(R.styleable.LingGridView_gridRowCount, 16)
+                    getInteger(R.styleable.LingGridView_gridColumnCount, 24),
+                    getInteger(R.styleable.LingGridView_gridRowCount, 24)
                 )
 
                 gridScaleHorizontalStep =
-                    getInteger(R.styleable.LingGridView_gridScaleHorizontalStep, 1)
+                    getInteger(R.styleable.LingGridView_gridScaleHorizontalStep, 6)
 
                 gridScaleVerticalStep =
-                    getInteger(R.styleable.LingGridView_gridScaleVerticalStep, 1)
+                    getInteger(R.styleable.LingGridView_gridScaleVerticalStep, 6)
 
                 showGridScaleLabel = getBoolean(R.styleable.LingGridView_showGridScaleLabel, true)
 
@@ -200,6 +306,8 @@ class LingGridView @JvmOverloads constructor(
         map: GoogleMap
     ) {
         this.map = map
+
+        currentZoomLevel = map.cameraPosition.zoom
 
         centerLatLng = latLng
 
@@ -352,15 +460,7 @@ class LingGridView @JvmOverloads constructor(
     }
 
     override fun getZoomLevelForGridLineDrawing(): Float {
-        val gw = gridSizeMeters.first
-        val gh = gridSizeMeters.second
-
-        return when {
-            gw >= 100 || gh >= 100 -> 17.5f
-            gw >= 50 || gh >= 50 -> 18.5f
-            gw >= 25 || gh >= 25 -> 19.5f
-            else -> 20f
-        }
+        return 15f
     }
 
     override fun getZoomLevelForToolingVisibilities(): Float {
@@ -368,12 +468,69 @@ class LingGridView @JvmOverloads constructor(
         val gh = gridSizeMeters.second
 
         return when {
-            gw >= 100 || gh >= 100 -> 15.8f
-            gw >= 50 || gh >= 50 -> 16.8f
-            gw >= 25 || gh >= 25 -> 17.8f
-            else -> 18.8f
+            gw >= 250 || gh >= 250 -> 13.8f
+            gw >= 100 || gh >= 100 -> 14.8f
+            gw >= 50 || gh >= 50 -> 15.8f
+            gw >= 25 || gh >= 25 -> 16.8f
+            else -> 17.8f
         }
     }
+
+    private var currentZoomLevel = 0f
+
+    private fun handleGridScaleMultipliers(zoomLevel: Float) {
+        val horizontalScaleInPixel =
+            (gridUi.width - gridUi.extraPadding * 2f) / gridSizeMeters.first * gridScaleHorizontalStep * gridScaleHorizontalStepMultiplier
+        val gMap = map ?: return
+
+        val isZoomingIn = when {
+            zoomLevel - currentZoomLevel > 0f -> true
+            zoomLevel - currentZoomLevel < 0f -> false
+            else -> return
+        }
+
+        if (gMap.cameraPosition.zoom == gMap.maxZoomLevel) {
+            gridScaleHorizontalStepMultiplier = 1
+        } else if (
+            horizontalScaleInPixel <= minimumPixelSizeThreshold
+            && !isZoomingIn
+        ) {
+            val newHorizontalScaleStep =
+                gridScaleHorizontalStep * gridScaleHorizontalStepMultiplier * 2
+
+            if (newHorizontalScaleStep <= gridSizeMeters.first) {
+                gridScaleHorizontalStepMultiplier *= 2
+            }
+        } else if (
+            horizontalScaleInPixel > minimumPixelSizeThreshold * 2
+            && isZoomingIn
+            && gridScaleHorizontalStepMultiplier > 1
+        ) {
+            gridScaleHorizontalStepMultiplier /= 2
+        }
+
+        val verticalScaleInPixel =
+            (gridUi.height - gridUi.extraPadding * 2f) / gridSizeMeters.second * gridScaleVerticalStep * gridScaleVerticalStepMultiplier
+
+        if (gMap.cameraPosition.zoom == gMap.maxZoomLevel) {
+            gridScaleVerticalStepMultiplier = 1
+        } else if (verticalScaleInPixel <= minimumPixelSizeThreshold && !isZoomingIn) {
+            val newVerticalScaleStep = gridScaleVerticalStep * gridScaleVerticalStepMultiplier * 2
+            if (newVerticalScaleStep <= gridSizeMeters.second) {
+                gridScaleVerticalStepMultiplier *= 2
+            }
+        } else if (
+            verticalScaleInPixel > minimumPixelSizeThreshold * 2
+            && isZoomingIn
+            && gridScaleVerticalStepMultiplier > 1
+        ) {
+            gridScaleVerticalStepMultiplier /= 2
+        }
+
+        currentZoomLevel = zoomLevel
+
+    }
+
 
     override fun onMapMove() {
         isMapMoving = true
@@ -384,6 +541,8 @@ class LingGridView @JvmOverloads constructor(
         val newDegrees = (gridUi.rotation - diff) % 360
 
         val zoomLevel = gMap.cameraPosition.zoom
+
+        handleGridScaleMultipliers(zoomLevel)
 
         gridUi.mapZoomLevel = zoomLevel
 

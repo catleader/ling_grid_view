@@ -9,10 +9,9 @@ import android.view.View
 import android.view.View.OnFocusChangeListener
 import android.view.Window
 import android.view.WindowManager
-import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
-import com.catleader.ling_grid_view.LingGridView
+import com.catleader.ling_grid_view.LingGridException
 
 
 class CustomGridScaleStepDialog private constructor(
@@ -62,10 +61,16 @@ class CustomGridScaleStepDialog private constructor(
     }
 
     init {
-
         edtGridScaleHorizontalStep.onFocusChangeListener = OnFocusChangeListener { _, hasFocus ->
             if (hasFocus) {
                 dialog.window!!.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE)
+            }
+        }
+
+        edtGridScaleVerticalStep.onFocusChangeListener = OnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                val text = edtGridScaleVerticalStep.text
+                if(text != null) edtGridScaleVerticalStep.setSelection(text.length)
             }
         }
 
@@ -99,37 +104,35 @@ class CustomGridScaleStepDialog private constructor(
                 error = true
             }
 
-            if (gridScaleHorizontal !in 1..LingGridView.maxGridSizePossibleInMeter) {
-                edtGridScaleHorizontalStep.error =
-                    "value must be 1..${LingGridView.maxGridSizePossibleInMeter}"
-                error = true
-
-            }
-
-            if (gridScaleVertical !in 1..LingGridView.maxGridSizePossibleInMeter) {
-                edtGridScaleVerticalStep.error =
-                    "value must be 1..${LingGridView.maxGridSizePossibleInMeter}"
-                error = true
-            }
-
-            if (gridScaleHorizontal != null && gridWidth % gridScaleHorizontal != 0) {
-                edtGridScaleHorizontalStep.error =
-                    "Grid's width must be divisible by grid scale value."
-                error = true
-            }
-
-
-            if (gridScaleVertical != null && gridHeight % gridScaleVertical != 0) {
-                edtGridScaleVerticalStep.error =
-                    "Grid's height must be divisible by grid scale value."
-                error = true
-            }
 
             if (error) return@setOnClickListener
 
             if (gridScaleVertical != null && gridScaleHorizontal != null) {
-                onValueSet?.invoke(gridScaleHorizontal, gridScaleVertical)
-                hide()
+                try {
+                    onValueSet?.invoke(gridScaleHorizontal, gridScaleVertical)
+                    hide()
+                } catch (exception: Exception) {
+                    when (exception) {
+                        LingGridException.HorizontalScaleValueExceed -> {
+                            edtGridScaleHorizontalStep.error = "Scale value exceed grid 's width."
+                        }
+                        LingGridException.VerticalScaleValueExceed -> {
+                            edtGridScaleVerticalStep.error = "Scale value exceed grid 's height."
+                        }
+                        LingGridException.HorizontalScaleTooSmall -> {
+                            edtGridScaleHorizontalStep.error = "Scale value too small."
+                        }
+                        LingGridException.HorizontalScaleTooSmall -> {
+                            edtGridScaleVerticalStep.error = "Scale value too small."
+                        }
+                        LingGridException.HorizontalScaleMustBeEvenWhenZoomedOut -> {
+                            edtGridScaleHorizontalStep.error = "Scale must be an even value when zoomed-out."
+                        }
+                        LingGridException.HorizontalScaleMustBeEvenWhenZoomedOut -> {
+                            edtGridScaleVerticalStep.error = "Scale must be an even value when zoomed-out."
+                        }
+                    }
+                }
             }
         }
 

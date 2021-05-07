@@ -4,12 +4,14 @@ import android.app.Dialog
 import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.Window
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.EditText
+import com.catleader.ling_grid_view.LingGridException
 import com.catleader.ling_grid_view.LingGridView
 
 class CustomGridSizeDialog private constructor(
@@ -23,6 +25,8 @@ class CustomGridSizeDialog private constructor(
             onValueSet: ((gw: Int, gh: Int) -> Unit)? = null,
         ): CustomGridSizeDialog = CustomGridSizeDialog(context, onValueSet)
     }
+
+    private var tag = "CustomGridSizeDialog"
 
     private val dialog: Dialog by lazy {
         dialogView = LayoutInflater.from(context).inflate(R.layout.custom_grid_size_dialog, null)
@@ -49,6 +53,13 @@ class CustomGridSizeDialog private constructor(
         edtGw.onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
             if (hasFocus) {
                 dialog.window!!.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE)
+            }
+        }
+
+        edtGh.onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                val text = edtGh.text
+                if (text != null) edtGh.setSelection(text.length)
             }
         }
 
@@ -82,8 +93,29 @@ class CustomGridSizeDialog private constructor(
 
             if (error) return@setOnClickListener
 
-            onValueSet?.invoke(gw!!, gh!!)
-            hide()
+
+            try {
+                onValueSet?.invoke(gw!!, gh!!)
+                hide()
+            } catch (e: Exception) {
+                when (e) {
+                    LingGridException.HorizontalGridSizeMustGreaterOrEqualItsScale -> {
+                        Log.e(
+                            tag,
+                            "Error on setting horizontal grid size, $gw is less than its corresponding scale."
+                        )
+                    }
+                    LingGridException.VerticalGridSizeMustGreaterOrEqualItsScale -> {
+                        Log.e(
+                            tag,
+                            "Error on setting vertical grid size, $gh is less than its corresponding scale."
+                        )
+                    }
+                    else -> {
+                        Log.e(tag, "Something happened when setting grid size: ${e.message}")
+                    }
+                }
+            }
 
         }
 
