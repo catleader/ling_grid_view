@@ -172,23 +172,36 @@ class GridUI @JvmOverloads constructor(
 
             val gridHeight = (height - extraPadding2Times).toFloat()
 
+            val horizontalScaleSqr = this@GridUI.gridScaleHorizontalStep * gridLineBoldRepeatPeriod
+
+            val verticalScaleSqr = this@GridUI.gridScaleVerticalStep * gridLineBoldRepeatPeriod
+
             for (i in 0..gridWidthSizeInMeters) {
-                if (i % gridScaleHorizontalStep == 0) {
-                    drawLine(
-                        extraPadding + i * pixelsPerMeter,
-                        extraPadding.toFloat(),
-                        extraPadding + i * pixelsPerMeter,
-                        extraPadding + gridHeight,
-                        if (i == 0 || i % gridLineBoldRepeatPeriod == 0) gridLinePaintBold else gridLinePaint
-                    )
-                } else if (i == gridWidthSizeInMeters) {
-                    drawLine(
-                        extraPadding + i * pixelsPerMeter,
-                        extraPadding.toFloat(),
-                        extraPadding + i * pixelsPerMeter,
-                        extraPadding + gridHeight,
-                        gridLinePaint
-                    )
+                when {
+                    i % gridScaleHorizontalStep == 0 -> {
+                        drawLine(
+                            extraPadding + i * pixelsPerMeter,
+                            extraPadding.toFloat(),
+                            extraPadding + i * pixelsPerMeter,
+                            extraPadding + gridHeight,
+                            if (i == 0 ||
+                                i % (if (gridScaleHorizontalStep == gridLineBoldRepeatPeriod * gridScaleHorizontalStepMultiplier) {
+                                    horizontalScaleSqr * gridScaleHorizontalStepMultiplier
+                                } else {
+                                    gridLineBoldRepeatPeriod
+                                }) == 0
+                            ) gridLinePaintBold else gridLinePaint
+                        )
+                    }
+                    i == gridWidthSizeInMeters -> {
+                        drawLine(
+                            extraPadding + i * pixelsPerMeter,
+                            extraPadding.toFloat(),
+                            extraPadding + i * pixelsPerMeter,
+                            extraPadding + gridHeight,
+                            gridLinePaint
+                        )
+                    }
                 }
 
                 if (showGridScaleLabel) {
@@ -223,22 +236,30 @@ class GridUI @JvmOverloads constructor(
             }
 
             for (i in 0..gridHeightSizeInMeters) {
-                if (i % gridScaleVerticalStep == 0) {
-                    drawLine(
-                        extraPadding.toFloat(),
-                        extraPadding + i * pixelsPerMeter,
-                        gridWidth + extraPadding,
-                        extraPadding + i * pixelsPerMeter,
-                        if (i == 0 || i % gridLineBoldRepeatPeriod == 0) gridLinePaintBold else gridLinePaint
-                    )
-                } else if (i == gridHeightSizeInMeters) {
-                    drawLine(
-                        extraPadding.toFloat(),
-                        extraPadding + i * pixelsPerMeter,
-                        gridWidth + extraPadding,
-                        extraPadding + i * pixelsPerMeter,
-                        gridLinePaint
-                    )
+                when {
+                    i % gridScaleVerticalStep == 0 -> {
+                        drawLine(
+                            extraPadding.toFloat(),
+                            extraPadding + i * pixelsPerMeter,
+                            gridWidth + extraPadding,
+                            extraPadding + i * pixelsPerMeter,
+                            if (i == 0 || i % (if (gridScaleVerticalStep == gridLineBoldRepeatPeriod * gridScaleVerticalStepMultiplier) {
+                                    verticalScaleSqr * gridScaleVerticalStepMultiplier
+                                } else {
+                                    gridLineBoldRepeatPeriod
+                                }) == 0
+                            ) gridLinePaintBold else gridLinePaint
+                        )
+                    }
+                    i == gridHeightSizeInMeters -> {
+                        drawLine(
+                            extraPadding.toFloat(),
+                            extraPadding + i * pixelsPerMeter,
+                            gridWidth + extraPadding,
+                            extraPadding + i * pixelsPerMeter,
+                            gridLinePaint
+                        )
+                    }
                 }
 
                 if (showGridScaleLabel) {
