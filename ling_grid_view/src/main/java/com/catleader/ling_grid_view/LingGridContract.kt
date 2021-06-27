@@ -7,11 +7,13 @@ interface LingGridContract {
 
     fun getGridUiRotation(): Float
 
+    fun onGridSizeSetterClicked()
+
     fun onGridMove(xOffset: Int, yOffset: Int)
 
-    fun getGridSizeInMeters(): Pair<Int, Int>
-
     fun onGridRotate(gridUISize: GridUISize, rotated: Float)
+
+    fun getGridSizeInMeters(): Pair<Int, Int>
 
     fun onMapMove()
 

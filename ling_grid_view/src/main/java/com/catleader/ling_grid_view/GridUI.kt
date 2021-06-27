@@ -12,6 +12,10 @@ class GridUI @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
+    enum class GridMode { GridCenterLabel, GridLeftRightLabel }
+
+    private val gridMode = GridMode.GridCenterLabel
+
     private val gridLineBoldRepeatPeriod: Int = 5
 
     private val tag = "GridUI"
@@ -132,10 +136,13 @@ class GridUI @JvmOverloads constructor(
         with(canvas) {
             var extraPadding2Times = extraPadding * 2
 
-            val gridScaleHorizontalStep =
-                gridScaleHorizontalStep * gridScaleHorizontalStepMultiplier
+            val horizontalStep = gridScaleHorizontalStep * gridScaleHorizontalStepMultiplier
 
-            val gridScaleVerticalStep = gridScaleVerticalStep * gridScaleVerticalStepMultiplier
+            val verticalStep = gridScaleVerticalStep * gridScaleVerticalStepMultiplier
+
+            val boldHorizontalStep = horizontalStep * gridLineBoldRepeatPeriod
+
+            val boldVerticalStep = verticalStep * gridLineBoldRepeatPeriod
 
             if (showGridScaleLabel) {
                 rect.set(
@@ -157,142 +164,277 @@ class GridUI @JvmOverloads constructor(
 
             drawRect(rect, gridBgPaint)
 
-
             rect.set(0, 0, width, height)
 
             if (showGridScaleLabel) drawRect(rect, scaleBgPaint)
 
             val gridWidthSizeInMeters = contact.getGridSizeInMeters().first
 
+            val gridHeightSizeInMeters = contact.getGridSizeInMeters().second
+
             pixelsPerMeter = (width - extraPadding2Times) / gridWidthSizeInMeters.toFloat()
 
             val gridWidth = (width - extraPadding2Times).toFloat()
 
-            val gridHeightSizeInMeters = contact.getGridSizeInMeters().second
-
             val gridHeight = (height - extraPadding2Times).toFloat()
 
-            val horizontalScaleSqr = this@GridUI.gridScaleHorizontalStep * gridLineBoldRepeatPeriod
+            if (gridMode == GridMode.GridCenterLabel) {
+                drawGridCenterMode(
+                    gridWidthSizeInMeters,
+                    gridHeightSizeInMeters,
+                    gridWidth,
+                    gridHeight,
+                    verticalStep,
+                    horizontalStep,
+                    boldVerticalStep,
+                    boldHorizontalStep
+                )
+            } else if (gridMode == GridMode.GridLeftRightLabel) {
+                drawGridLeftToRightMode(
+                    gridWidthSizeInMeters,
+                    gridHeightSizeInMeters,
+                    gridWidth,
+                    gridHeight,
+                    boldVerticalStep,
+                    boldHorizontalStep
+                )
+            }
 
-            val verticalScaleSqr = this@GridUI.gridScaleVerticalStep * gridLineBoldRepeatPeriod
+        }
+    }
 
-            for (i in 0..gridWidthSizeInMeters) {
-                when {
-                    i % gridScaleHorizontalStep == 0 -> {
-                        drawLine(
-                            extraPadding + i * pixelsPerMeter,
-                            extraPadding.toFloat(),
-                            extraPadding + i * pixelsPerMeter,
-                            extraPadding + gridHeight,
-                            if (i == 0 ||
-                                i % (if (gridScaleHorizontalStep == gridLineBoldRepeatPeriod * gridScaleHorizontalStepMultiplier) {
-                                    horizontalScaleSqr * gridScaleHorizontalStepMultiplier
-                                } else {
-                                    gridLineBoldRepeatPeriod
-                                }) == 0
-                            ) gridLinePaintBold else gridLinePaint
-                        )
-                    }
-                    i == gridWidthSizeInMeters -> {
-                        drawLine(
-                            extraPadding + i * pixelsPerMeter,
-                            extraPadding.toFloat(),
-                            extraPadding + i * pixelsPerMeter,
-                            extraPadding + gridHeight,
-                            gridLinePaint
-                        )
-                    }
-                }
+    private fun Canvas.drawGridCenterMode(
+        gridWidthSizeInMeters: Int,
+        gridHeightSizeInMeters: Int,
+        gridWidth: Float,
+        gridHeight: Float,
+        verticalStep: Int,
+        horizontalStep: Int,
+        boldVerticalStep: Int,
+        boldHorizontalStep: Int
+    ) {
+        for (i in 0..gridWidthSizeInMeters) {
+
+            val centerNumber = gridWidthSizeInMeters / 2
+
+            val drawingNumber = when {
+                i < centerNumber -> centerNumber - i
+                i > centerNumber -> i - centerNumber
+                else -> 0
+            }
+
+            val isStartOrCenterOrEndNumber = i == 0
+                    || drawingNumber == 0
+                    || i == gridWidthSizeInMeters
+
+            // check if we need to draw a line.
+            // Always draw a line if it a start number, center number or ending number.
+            if (isStartOrCenterOrEndNumber || drawingNumber % horizontalStep == 0) {
+                val boldLine = drawingNumber % boldHorizontalStep == 0
+                val paint = if (boldLine) gridLinePaintBold else gridLinePaint
+
+                drawLine(
+                    extraPadding + i * pixelsPerMeter,
+                    extraPadding.toFloat(),
+                    extraPadding + i * pixelsPerMeter,
+                    extraPadding + gridHeight,
+                    paint,
+                )
 
                 if (showGridScaleLabel) {
                     val textPaint = if (i < 10) textPaintNormal else textPaintSmall
-                    textWidth = textPaint.measureText("$i")
-
-                    textPaint.getTextBounds("$i", 0, "$i".length, textBounds)
-
+                    textWidth = textPaint.measureText("$drawingNumber")
+                    textPaint.getTextBounds(
+                        "$drawingNumber",
+                        0,
+                        "$drawingNumber".length,
+                        textBounds
+                    )
                     textHeight = textBounds.height().toFloat()
 
-                    if (i == gridWidthSizeInMeters || (i != 0 && i % gridScaleHorizontalStep == 0)) {
-                        drawText(
-                            "$i",
-                            extraPadding + i * pixelsPerMeter,
-                            extraPadding.toFloat() - (extraPadding - textHeight) / 2f,
-                            textPaint
-                        )
-                    }
-
-                    val label = gridWidthSizeInMeters - i
-                    if (label != 0 && i % gridScaleHorizontalStep == 0) {
-                        drawText(
-                            "$label",
-                            extraPadding + i * pixelsPerMeter,
-                            height - (extraPadding - textHeight) / 2f,
-                            textPaint
-                        )
-                    }
-
-
+                    drawText(
+                        "$drawingNumber",
+                        extraPadding + i * pixelsPerMeter,
+                        extraPadding.toFloat() - (extraPadding - textHeight) / 2f,
+                        textPaint
+                    )
                 }
             }
+        }
 
-            for (i in 0..gridHeightSizeInMeters) {
-                when {
-                    i % gridScaleVerticalStep == 0 -> {
-                        drawLine(
-                            extraPadding.toFloat(),
-                            extraPadding + i * pixelsPerMeter,
-                            gridWidth + extraPadding,
-                            extraPadding + i * pixelsPerMeter,
-                            if (i == 0 || i % (if (gridScaleVerticalStep == gridLineBoldRepeatPeriod * gridScaleVerticalStepMultiplier) {
-                                    verticalScaleSqr * gridScaleVerticalStepMultiplier
-                                } else {
-                                    gridLineBoldRepeatPeriod
-                                }) == 0
-                            ) gridLinePaintBold else gridLinePaint
-                        )
-                    }
-                    i == gridHeightSizeInMeters -> {
-                        drawLine(
-                            extraPadding.toFloat(),
-                            extraPadding + i * pixelsPerMeter,
-                            gridWidth + extraPadding,
-                            extraPadding + i * pixelsPerMeter,
-                            gridLinePaint
-                        )
-                    }
-                }
+
+        for (i in 0..gridHeightSizeInMeters) {
+            val centerNumber = gridHeightSizeInMeters / 2
+
+            val drawingNumber = when {
+                i < centerNumber -> centerNumber - i
+                i > centerNumber -> i - centerNumber
+                else -> 0
+            }
+
+            val isStartOrCenterOrEndNumber = i == 0
+                    || drawingNumber == 0
+                    || i == gridHeightSizeInMeters
+
+            // check if we need to draw a line.
+            // Always draw a line if it a start number, center number or ending number.
+            if (isStartOrCenterOrEndNumber || drawingNumber % verticalStep == 0) {
+                val boldLine = drawingNumber % boldVerticalStep == 0
+                val paint = if (boldLine) gridLinePaintBold else gridLinePaint
+
+                drawLine(
+                    extraPadding.toFloat(),
+                    extraPadding + i * pixelsPerMeter,
+                    gridWidth + extraPadding,
+                    extraPadding + i * pixelsPerMeter,
+                    paint
+                )
 
                 if (showGridScaleLabel) {
-
                     val textPaint = if (i < 10) textPaintNormal else textPaintSmall
-
-                    textWidth = textPaint.measureText("$i")
-
-                    textPaint.getTextBounds("$i", 0, "$i".length, textBounds)
-
+                    textWidth = textPaint.measureText("$drawingNumber")
+                    textPaint.getTextBounds(
+                        "$drawingNumber",
+                        0,
+                        "$drawingNumber".length,
+                        textBounds
+                    )
                     textHeight = textBounds.height().toFloat()
 
-                    if (i == gridHeightSizeInMeters || (i != 0 && i % gridScaleVerticalStep == 0)) {
-                        drawText(
-                            "$i",
-                            extraPadding / 2f,
-                            (extraPadding + i * pixelsPerMeter) + textHeight / 2,
-                            textPaint
-                        )
-                    }
-                    val label = gridHeightSizeInMeters - i
-                    if (label != 0 && i % gridScaleVerticalStep == 0) {
-                        drawText(
-                            "$label",
-                            width - extraPadding / 2f,
-                            (extraPadding + i * pixelsPerMeter) + textHeight / 2,
-                            textPaint
-                        )
-                    }
-
+                    drawText(
+                        "$drawingNumber",
+                        gridWidth + extraPadding + extraPadding/2,
+                        (extraPadding + i * pixelsPerMeter) + textHeight / 2,
+                        textPaint
+                    )
                 }
             }
 
+        }
+    }
+
+    private fun Canvas.drawGridLeftToRightMode(
+        gridWidthSizeInMeters: Int,
+        gridHeightSizeInMeters: Int,
+        gridWidth: Float,
+        gridHeight: Float,
+        boldVerticalStep: Int,
+        boldHorizontalStep: Int
+    ) {
+
+        for (i in 0..gridWidthSizeInMeters) {
+            when {
+                i % gridScaleHorizontalStep == 0 -> {
+                    drawLine(
+                        extraPadding + i * pixelsPerMeter,
+                        extraPadding.toFloat(),
+                        extraPadding + i * pixelsPerMeter,
+                        extraPadding + gridHeight,
+                        if (i == 0 ||
+                            i % (if (gridScaleHorizontalStep == gridLineBoldRepeatPeriod * gridScaleHorizontalStepMultiplier) {
+                                boldHorizontalStep
+                            } else {
+                                gridLineBoldRepeatPeriod
+                            }) == 0
+                        ) gridLinePaintBold else gridLinePaint
+                    )
+                }
+                i == gridWidthSizeInMeters -> {
+                    drawLine(
+                        extraPadding + i * pixelsPerMeter,
+                        extraPadding.toFloat(),
+                        extraPadding + i * pixelsPerMeter,
+                        extraPadding + gridHeight,
+                        gridLinePaint
+                    )
+                }
+            }
+
+            if (showGridScaleLabel) {
+                val textPaint = if (i < 10) textPaintNormal else textPaintSmall
+                textWidth = textPaint.measureText("$i")
+
+                textPaint.getTextBounds("$i", 0, "$i".length, textBounds)
+
+                textHeight = textBounds.height().toFloat()
+
+                if (i == gridWidthSizeInMeters || (i != 0 && i % gridScaleHorizontalStep == 0)) {
+                    drawText(
+                        "$i",
+                        extraPadding + i * pixelsPerMeter,
+                        extraPadding.toFloat() - (extraPadding - textHeight) / 2f,
+                        textPaint
+                    )
+                }
+
+                val label = gridWidthSizeInMeters - i
+                if (label != 0 && i % gridScaleHorizontalStep == 0) {
+                    drawText(
+                        "$label",
+                        extraPadding + i * pixelsPerMeter,
+                        height - (extraPadding - textHeight) / 2f,
+                        textPaint
+                    )
+                }
+            }
+        }
+
+        for (i in 0..gridHeightSizeInMeters) {
+            when {
+                i % gridScaleVerticalStep == 0 -> {
+                    drawLine(
+                        extraPadding.toFloat(),
+                        extraPadding + i * pixelsPerMeter,
+                        gridWidth + extraPadding,
+                        extraPadding + i * pixelsPerMeter,
+                        if (i == 0 || i % (if (gridScaleVerticalStep == gridLineBoldRepeatPeriod * gridScaleVerticalStepMultiplier) {
+                                boldVerticalStep
+                            } else {
+                                gridLineBoldRepeatPeriod
+                            }) == 0
+                        ) gridLinePaintBold else gridLinePaint
+                    )
+                }
+                i == gridHeightSizeInMeters -> {
+                    drawLine(
+                        extraPadding.toFloat(),
+                        extraPadding + i * pixelsPerMeter,
+                        gridWidth + extraPadding,
+                        extraPadding + i * pixelsPerMeter,
+                        gridLinePaint
+                    )
+                }
+            }
+
+            if (showGridScaleLabel) {
+
+                val textPaint = if (i < 10) textPaintNormal else textPaintSmall
+
+                textWidth = textPaint.measureText("$i")
+
+                textPaint.getTextBounds("$i", 0, "$i".length, textBounds)
+
+                textHeight = textBounds.height().toFloat()
+
+                if (i == gridHeightSizeInMeters || (i != 0 && i % gridScaleVerticalStep == 0)) {
+                    drawText(
+                        "$i",
+                        extraPadding / 2f,
+                        (extraPadding + i * pixelsPerMeter) + textHeight / 2,
+                        textPaint
+                    )
+                }
+                val label = gridHeightSizeInMeters - i
+                if (label != 0 && i % gridScaleVerticalStep == 0) {
+                    drawText(
+                        "$label",
+                        width - extraPadding / 2f,
+                        (extraPadding + i * pixelsPerMeter) + textHeight / 2,
+                        textPaint
+                    )
+                }
+
+            }
         }
     }
 

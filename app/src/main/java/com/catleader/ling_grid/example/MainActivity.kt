@@ -81,6 +81,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             lingGridView.relocateGridToCenterOfMap()
         }
 
+        lingGridView.gridSizeSetterClickListener = { currentSize ->
+            gridSizeDialog.clearError()
+            gridSizeDialog.setCurrentGridSize(gridSize = lingGridView.gridSizeMeters)
+            gridSizeDialog.show()
+        }
+
 
     }
 

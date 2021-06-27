@@ -21,4 +21,10 @@
         android:layout_width="32dp"
         android:layout_height="32dp"/>
 
+    <com.catleader.ling_grid_view.GridSizeSetter
+        android:id="@+id/gridSizeSetter"
+        android:layout_width="32dp"
+        android:layout_height="32dp"/>
+
+
 </merge>
