@@ -86,6 +86,12 @@ class LingGridView @JvmOverloads constructor(
 
 
     /**
+     * Callback function that will be called when [GridSizeSetter] view is clicked
+     */
+    var  gridSizeSetterVisibilityListener: ((isShowing: Boolean) -> Unit)? = null
+
+
+    /**
      * Set grid scale horizontal step
      *
      * @throws LingGridException.HorizontalScaleValueExceed
@@ -612,8 +618,10 @@ class LingGridView @JvmOverloads constructor(
         }
 
         if (zoomLevel >= getZoomLevelJustSizeSetterView()) {
+            gridSizeSetterVisibilityListener?.invoke(true)
             gridSizeSetter.visibility = View.VISIBLE
         } else {
+            gridSizeSetterVisibilityListener?.invoke(false)
             gridSizeSetter.visibility = View.GONE
         }
 

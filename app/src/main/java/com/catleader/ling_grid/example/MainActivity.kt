@@ -3,6 +3,7 @@ package com.catleader.ling_grid.example
 import android.Manifest
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.catleader.ling_grid.example.databinding.ActivityMainBinding
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -85,6 +86,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             gridSizeDialog.clearError()
             gridSizeDialog.setCurrentGridSize(gridSize = lingGridView.gridSizeMeters)
             gridSizeDialog.show()
+        }
+
+        lingGridView.gridSizeSetterVisibilityListener = { isShowing ->
+            binding.btnCustomGridSize.visibility = if(isShowing) View.GONE else View.VISIBLE
         }
 
 
