@@ -92,6 +92,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             binding.btnCustomGridSize.visibility = if(isShowing) View.GONE else View.VISIBLE
         }
 
+        lingGridView.gridAutoScale = false
 
     }
 

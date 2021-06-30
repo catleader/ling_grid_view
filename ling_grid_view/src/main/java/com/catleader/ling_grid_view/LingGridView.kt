@@ -82,14 +82,19 @@ class LingGridView @JvmOverloads constructor(
     /**
      * Callback function that will be called when [GridSizeSetter] view is clicked
      */
-    var  gridSizeSetterClickListener: ((currentSize: Pair<Int, Int>) -> Unit)? = null
+    var gridSizeSetterClickListener: ((currentSize: Pair<Int, Int>) -> Unit)? = null
 
 
     /**
      * Callback function that will be called when [GridSizeSetter] view is clicked
      */
-    var  gridSizeSetterVisibilityListener: ((isShowing: Boolean) -> Unit)? = null
+    var gridSizeSetterVisibilityListener: ((isShowing: Boolean) -> Unit)? = null
 
+
+    /**
+     * Control grid auto scale when user is zooming.
+     */
+    var gridAutoScale = true
 
     /**
      * Set grid scale horizontal step
@@ -140,7 +145,7 @@ class LingGridView @JvmOverloads constructor(
     private var gridScaleHorizontalStepMultiplier: Int = 1
         set(value) {
             val sumScale = value * gridScaleHorizontalStep
-            if (sumScale in 1..maxGridSizePossibleInMeter && sumScale <= gridSizeMeters.first ) {
+            if (sumScale in 1..maxGridSizePossibleInMeter && sumScale <= gridSizeMeters.first) {
                 field = value
                 gridUi.gridScaleHorizontalStepMultiplier = value
             }
@@ -296,10 +301,16 @@ class LingGridView @JvmOverloads constructor(
                 )
 
                 gridScaleHorizontalStep =
-                    getInteger(R.styleable.LingGridView_gridScaleHorizontalStep, gridScaleHorizontalStep)
+                    getInteger(
+                        R.styleable.LingGridView_gridScaleHorizontalStep,
+                        gridScaleHorizontalStep
+                    )
 
                 gridScaleVerticalStep =
-                    getInteger(R.styleable.LingGridView_gridScaleVerticalStep, gridScaleVerticalStep)
+                    getInteger(
+                        R.styleable.LingGridView_gridScaleVerticalStep,
+                        gridScaleVerticalStep
+                    )
 
                 showGridScaleLabel = getBoolean(R.styleable.LingGridView_showGridScaleLabel, true)
 
@@ -431,35 +442,35 @@ class LingGridView @JvmOverloads constructor(
             angle = gridUi.rotation
         )
 
-        val gm = getRotatedPoint(
-            gridCenterX = glp.leftMargin + glp.width / 2,
-            gridCenterY = glp.topMargin + glp.height / 2,
-            targetX = glp.leftMargin + glp.width + controllerPadding,
-            targetY = glp.topMargin + glp.height - gmlp.height - controllerPadding,
-            angle = gridUi.rotation
-        )
-
-        val cGM = getRotatedPoint(
-            gridCenterX = glp.leftMargin + glp.width / 2,
-            gridCenterY = glp.topMargin + glp.height / 2,
-            targetX = glp.leftMargin + glp.width + gmlp.width / 2 + controllerPadding,
-            targetY = glp.topMargin + glp.height - gmlp.height / 2 - controllerPadding,
-            angle = gridUi.rotation
-        )
-
         val gs = getRotatedPoint(
             gridCenterX = glp.leftMargin + glp.width / 2,
             gridCenterY = glp.topMargin + glp.height / 2,
             targetX = glp.leftMargin + glp.width + controllerPadding,
-            targetY = glp.topMargin + glp.height - gmlp.height - gslp.height - (2 * controllerPadding),
+            targetY = glp.topMargin + glp.height - gslp.height - controllerPadding,
             angle = gridUi.rotation
         )
 
         val cGS = getRotatedPoint(
             gridCenterX = glp.leftMargin + glp.width / 2,
             gridCenterY = glp.topMargin + glp.height / 2,
-            targetX = glp.leftMargin + glp.width + gmlp.width / 2 + controllerPadding,
-            targetY = glp.topMargin + glp.height - gmlp.height - gslp.height / 2 - (2 * controllerPadding),
+            targetX = glp.leftMargin + glp.width + gslp.width / 2 + controllerPadding,
+            targetY = glp.topMargin + glp.height - gslp.height / 2 - controllerPadding,
+            angle = gridUi.rotation
+        )
+
+        val gm = getRotatedPoint(
+            gridCenterX = glp.leftMargin + glp.width / 2,
+            gridCenterY = glp.topMargin + glp.height / 2,
+            targetX = glp.leftMargin + glp.width - gmlp.width,
+            targetY = glp.topMargin + glp.height + controllerPadding,
+            angle = gridUi.rotation
+        )
+
+        val cGM = getRotatedPoint(
+            gridCenterX = glp.leftMargin + glp.width / 2,
+            gridCenterY = glp.topMargin + glp.height / 2,
+            targetX = glp.leftMargin + glp.width - gmlp.width / 2,
+            targetY = glp.topMargin + glp.height + gmlp.height / 2 + controllerPadding,
             angle = gridUi.rotation
         )
 
@@ -520,19 +531,6 @@ class LingGridView @JvmOverloads constructor(
             gw >= 100 || gh >= 100 -> 14.8f
             gw >= 50 || gh >= 50 -> 15.8f
             gw >= 25 || gh >= 25 -> 16.8f
-            else -> 17.8f
-        }
-    }
-
-    fun getZoomLevelJustSizeSetterView(): Float {
-        val gw = gridSizeMeters.first
-        val gh = gridSizeMeters.second
-
-        return when {
-            gw >= 250 || gh >= 250 -> 15.8f
-            gw >= 100 || gh >= 100 -> 16.8f
-            gw >= 50 || gh >= 50 -> 17.8f
-            gw >= 25 || gh >= 25 -> 18.8f
             else -> 17.8f
         }
     }
@@ -603,7 +601,9 @@ class LingGridView @JvmOverloads constructor(
 
         val zoomLevel = gMap.cameraPosition.zoom
 
-        handleGridScaleMultipliers(zoomLevel)
+        if (gridAutoScale) {
+            handleGridScaleMultipliers(zoomLevel)
+        }
 
         gridUi.mapZoomLevel = zoomLevel
 
@@ -611,18 +611,12 @@ class LingGridView @JvmOverloads constructor(
             gridController.visibility = View.VISIBLE
             gridMover.visibility = View.VISIBLE
             gridSizeSetter.visibility = View.VISIBLE
+            gridSizeSetterVisibilityListener?.invoke(true)
         } else {
             gridController.visibility = View.GONE
             gridMover.visibility = View.GONE
             gridSizeSetter.visibility = View.GONE
-        }
-
-        if (zoomLevel >= getZoomLevelJustSizeSetterView()) {
-            gridSizeSetterVisibilityListener?.invoke(true)
-            gridSizeSetter.visibility = View.VISIBLE
-        } else {
             gridSizeSetterVisibilityListener?.invoke(false)
-            gridSizeSetter.visibility = View.GONE
         }
 
         handleMapChange(newDegrees)
