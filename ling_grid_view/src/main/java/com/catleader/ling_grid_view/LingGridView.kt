@@ -461,7 +461,7 @@ class LingGridView @JvmOverloads constructor(
         val gm = getRotatedPoint(
             gridCenterX = glp.leftMargin + glp.width / 2,
             gridCenterY = glp.topMargin + glp.height / 2,
-            targetX = glp.leftMargin + glp.width - gmlp.width,
+            targetX = glp.leftMargin + glp.width - gmlp.width - controllerPadding,
             targetY = glp.topMargin + glp.height + controllerPadding,
             angle = gridUi.rotation
         )
