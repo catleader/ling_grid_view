@@ -142,7 +142,7 @@ class LingGridView @JvmOverloads constructor(
             }
         }
 
-    private var gridScaleHorizontalStepMultiplier: Int = 1
+    var gridScaleHorizontalStepMultiplier: Int = 1
         set(value) {
             val sumScale = value * gridScaleHorizontalStep
             if (sumScale in 1..maxGridSizePossibleInMeter && sumScale <= gridSizeMeters.first) {
@@ -197,7 +197,7 @@ class LingGridView @JvmOverloads constructor(
             }
         }
 
-    private var gridScaleVerticalStepMultiplier: Int = 1
+    var gridScaleVerticalStepMultiplier: Int = 1
         set(value) {
             val sumScale = value * gridScaleVerticalStep
             if (sumScale in 1..maxGridSizePossibleInMeter && sumScale <= gridSizeMeters.second) {
