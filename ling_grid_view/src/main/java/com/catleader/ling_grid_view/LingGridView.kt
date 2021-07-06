@@ -86,15 +86,27 @@ class LingGridView @JvmOverloads constructor(
 
 
     /**
-     * Callback function that will be called when [GridSizeSetter] view is clicked
+     * Callback function that will be called when grid tooling view changes
      */
-    var gridSizeSetterVisibilityListener: ((isShowing: Boolean) -> Unit)? = null
-
+    var gridToolingVisibilityListener: ((isShowing: Boolean) -> Unit)? = null
 
     /**
      * Control grid auto scale when user is zooming.
      */
     var gridAutoScale = true
+
+    /**
+     * Control grid tooling visibility type which is [TOOLING_DEFAULT], [TOOLING_ALWAYS_HIDE] or [TOOLING_ALWAYS_HIDE]
+     * [TOOLING_DEFAULT] -> Default value, auto hide or show tooling depends on circumstances.
+     * [TOOLING_ALWAYS_SHOW] -> Always show tooling.
+     * [TOOLING_ALWAYS_HIDE] -> Always hide tooling.
+     */
+    var gridToolingVisibilityType = TOOLING_DEFAULT
+        set(value) {
+            field = value
+            onMapMove()
+        }
+
 
     /**
      * Set grid scale horizontal step
@@ -267,12 +279,16 @@ class LingGridView @JvmOverloads constructor(
 
     private val minimumPixelSizeThreshold = 30
 
+    private var initialized = false
+
     init {
         elevation = 1 * resources.displayMetrics.density
         gridUi.lingGridContract = this
+
         gridController.visibility = View.GONE
         gridMover.visibility = View.GONE
         gridSizeSetter.visibility = View.GONE
+        gridUi.visibility = View.GONE
 
         gridMover.lingGridContract = this
         gridController.lingGridContract = this
@@ -351,6 +367,8 @@ class LingGridView @JvmOverloads constructor(
             showGridScaleLabel = state.showGridScaleLabel == 1
             gridScaleHorizontalStep = state.gridScaleHorizontalStep
             gridScaleVerticalStep = state.gridScaleVerticalStep
+            gridAutoScale = state.gridAutoScale == 1
+            gridToolingVisibilityType = state.gridToolingVisibilityType
             handleMapChange(state.gridRotation)
             stateToBeRestored = null
         } else {
@@ -414,6 +432,13 @@ class LingGridView @JvmOverloads constructor(
         gridUi.layoutParams = glp
 
         repositionGridTools()
+        if(!initialized) {
+            gridUi.visibility = View.VISIBLE
+            gridController.visibility = View.VISIBLE
+            gridMover.visibility = View.VISIBLE
+            gridSizeSetter.visibility = View.VISIBLE
+            initialized = true
+        }
     }
 
     private val m = Matrix()
@@ -607,16 +632,36 @@ class LingGridView @JvmOverloads constructor(
 
         gridUi.mapZoomLevel = zoomLevel
 
-        if (zoomLevel >= getZoomLevelForToolingVisibilities()) {
-            gridController.visibility = View.VISIBLE
-            gridMover.visibility = View.VISIBLE
-            gridSizeSetter.visibility = View.VISIBLE
-            gridSizeSetterVisibilityListener?.invoke(true)
-        } else {
-            gridController.visibility = View.GONE
-            gridMover.visibility = View.GONE
-            gridSizeSetter.visibility = View.GONE
-            gridSizeSetterVisibilityListener?.invoke(false)
+        when (gridToolingVisibilityType) {
+            TOOLING_DEFAULT -> {
+                if (zoomLevel >= getZoomLevelForToolingVisibilities()) {
+                    val shouldNotify = gridController.visibility != View.VISIBLE
+                    gridController.visibility = View.VISIBLE
+                    gridMover.visibility = View.VISIBLE
+                    gridSizeSetter.visibility = View.VISIBLE
+                    if(shouldNotify) gridToolingVisibilityListener?.invoke(true)
+                } else {
+                    val shouldNotify = gridController.visibility != View.GONE
+                    gridController.visibility = View.GONE
+                    gridMover.visibility = View.GONE
+                    gridSizeSetter.visibility = View.GONE
+                    if(shouldNotify) gridToolingVisibilityListener?.invoke(false)
+                }
+            }
+            TOOLING_ALWAYS_SHOW -> {
+                val shouldNotify = gridController.visibility != View.VISIBLE
+                gridController.visibility = View.VISIBLE
+                gridMover.visibility = View.VISIBLE
+                gridSizeSetter.visibility = View.VISIBLE
+                if(shouldNotify) gridToolingVisibilityListener?.invoke(true)
+            }
+            TOOLING_ALWAYS_HIDE -> {
+                val shouldNotify = gridController.visibility != View.GONE
+                gridController.visibility = View.GONE
+                gridMover.visibility = View.GONE
+                gridSizeSetter.visibility = View.GONE
+                if(shouldNotify) gridToolingVisibilityListener?.invoke(false)
+            }
         }
 
         handleMapChange(newDegrees)
@@ -708,6 +753,8 @@ class LingGridView @JvmOverloads constructor(
         state.showGridScaleLabel = if (showGridScaleLabel) 1 else 0
         state.gridScaleHorizontalStep = gridScaleHorizontalStep
         state.gridScaleVerticalStep = gridScaleVerticalStep
+        state.gridAutoScale = if(gridAutoScale) 1 else 0
+        state.gridToolingVisibilityType = gridToolingVisibilityType
         return state
     }
 
@@ -735,6 +782,8 @@ class LingGridView @JvmOverloads constructor(
         var showGridScaleLabel: Int = 0
         var gridScaleHorizontalStep: Int = 1
         var gridScaleVerticalStep: Int = 1
+        var gridAutoScale: Int = 1
+        var gridToolingVisibilityType: Int = TOOLING_DEFAULT
 
         constructor(superState: Parcelable?) : super(superState)
 
@@ -749,6 +798,8 @@ class LingGridView @JvmOverloads constructor(
             showGridScaleLabel = parcel.readInt()
             gridScaleHorizontalStep = parcel.readInt()
             gridScaleVerticalStep = parcel.readInt()
+            gridAutoScale = parcel.readInt()
+            gridToolingVisibilityType = parcel.readInt()
         }
 
         override fun writeToParcel(parcel: Parcel, flags: Int) {
@@ -763,6 +814,8 @@ class LingGridView @JvmOverloads constructor(
             parcel.writeInt(showGridScaleLabel)
             parcel.writeInt(gridScaleHorizontalStep)
             parcel.writeInt(gridScaleVerticalStep)
+            parcel.writeInt(gridAutoScale)
+            parcel.writeInt(gridToolingVisibilityType)
         }
 
         override fun describeContents(): Int {
@@ -794,6 +847,11 @@ class LingGridView @JvmOverloads constructor(
         ): Float {
             return ((156543.03392 * cos(latitude * Math.PI / 180)).toFloat() / 2f.pow(zoomLevel)) / displayDensity
         }
+
+
+        val TOOLING_DEFAULT = 0
+        val TOOLING_ALWAYS_SHOW = 1
+        val TOOLING_ALWAYS_HIDE = 2
 
     }
 

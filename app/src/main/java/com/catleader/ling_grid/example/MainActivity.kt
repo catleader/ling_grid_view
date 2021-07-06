@@ -3,9 +3,10 @@ package com.catleader.ling_grid.example
 import android.Manifest
 import android.annotation.SuppressLint
 import android.os.Bundle
-import android.view.View
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.catleader.ling_grid.example.databinding.ActivityMainBinding
+import com.catleader.ling_grid_view.LingGridView
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -15,7 +16,7 @@ import com.tbruyelle.rxpermissions3.RxPermissions
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
-    private val tag = "MapsActivity"
+    private val tag = "MainActivity"
 
     private lateinit var map: GoogleMap
 
@@ -52,12 +53,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
-        binding.btnCustomGridSize.setOnClickListener {
-            gridSizeDialog.clearError()
-            gridSizeDialog.setCurrentGridSize(gridSize = lingGridView.gridSizeMeters)
-            gridSizeDialog.show()
-        }
-
         binding.btnCustomGridScaleStep.setOnClickListener {
             gridScaleDialog.gridSizeInMeters = lingGridView.gridSizeMeters
             gridScaleDialog.setCurrentGridScale(
@@ -66,6 +61,23 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             )
             gridScaleDialog.clearError()
             gridScaleDialog.show()
+        }
+
+        binding.btnChangeGridToolingVisibilityType.setOnClickListener {
+            when(lingGridView.gridToolingVisibilityType) {
+                LingGridView.TOOLING_DEFAULT -> {
+                    lingGridView.gridToolingVisibilityType = LingGridView.TOOLING_ALWAYS_SHOW
+                    binding.gridToolingVisibilityType.text = "TOOLING_ALWAYS_SHOW"
+                }
+                LingGridView.TOOLING_ALWAYS_SHOW -> {
+                    lingGridView.gridToolingVisibilityType = LingGridView.TOOLING_ALWAYS_HIDE
+                    binding.gridToolingVisibilityType.text = "TOOLING_ALWAYS_HIDE"
+                }
+                LingGridView.TOOLING_ALWAYS_HIDE -> {
+                    lingGridView.gridToolingVisibilityType = LingGridView.TOOLING_DEFAULT
+                    binding.gridToolingVisibilityType.text = "TOOLING_DEFAULT"
+                }
+            }
         }
 
         binding.btnToggleGridScaleLabel.setOnClickListener {
@@ -88,11 +100,22 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             gridSizeDialog.show()
         }
 
-        lingGridView.gridSizeSetterVisibilityListener = { isShowing ->
-            binding.btnCustomGridSize.visibility = if(isShowing) View.GONE else View.VISIBLE
+        lingGridView.gridToolingVisibilityListener = { isShowing ->
+            Log.d(tag, "Grid tooling visibility: $isShowing")
         }
 
-        lingGridView.gridAutoScale = false
+
+        when(lingGridView.gridToolingVisibilityType) {
+            LingGridView.TOOLING_DEFAULT -> {
+                binding.gridToolingVisibilityType.text = "TOOLING_DEFAULT"
+            }
+            LingGridView.TOOLING_ALWAYS_SHOW -> {
+                binding.gridToolingVisibilityType.text = "TOOLING_ALWAYS_SHOW"
+            }
+            LingGridView.TOOLING_ALWAYS_HIDE -> {
+                binding.gridToolingVisibilityType.text = "TOOLING_ALWAYS_HIDE"
+            }
+        }
 
     }
 
