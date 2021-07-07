@@ -9,6 +9,10 @@ interface LingGridContract {
 
     fun onGridSizeSetterClicked()
 
+    fun onGridControllerClicked()
+
+    fun onGridMoverClicked()
+
     fun onGridMove(xOffset: Int, yOffset: Int)
 
     fun onGridRotate(gridUISize: GridUISize, rotated: Float)

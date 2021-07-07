@@ -39,6 +39,8 @@ class GridController @JvmOverloads constructor(
             MotionEvent.ACTION_DOWN -> {
                 if (!::lingGridContract.isInitialized) return false
 
+                lingGridContract.onGridControllerClicked()
+
                 startedRotatedDegrees = lingGridContract.getGridUiRotation()
 
                 centerPoint.set(lingGridContract.getGridUiCenterPoint())

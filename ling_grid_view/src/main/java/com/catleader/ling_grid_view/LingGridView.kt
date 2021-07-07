@@ -91,6 +91,11 @@ class LingGridView @JvmOverloads constructor(
     var gridToolingVisibilityListener: ((isShowing: Boolean) -> Unit)? = null
 
     /**
+     * Callback function that will be called when grid tooling is clicked
+     */
+    var gridToolingClickedListener: ((toolingType: Int) -> Unit)? = null
+
+    /**
      * Control grid auto scale when user is zooming.
      */
     var gridAutoScale = true
@@ -400,6 +405,15 @@ class LingGridView @JvmOverloads constructor(
 
     override fun onGridSizeSetterClicked() {
         gridSizeSetterClickListener?.invoke(gridSizeMeters)
+        gridToolingClickedListener?.invoke(GRID_SIZE_SETTER)
+    }
+
+    override fun onGridControllerClicked() {
+        gridToolingClickedListener?.invoke(GRID_ROTATOR)
+    }
+
+    override fun onGridMoverClicked() {
+        gridToolingClickedListener?.invoke(GRID_MOVER)
     }
 
     override fun getGridSizeInMeters(): Pair<Int, Int> {
@@ -852,6 +866,10 @@ class LingGridView @JvmOverloads constructor(
         val TOOLING_DEFAULT = 0
         val TOOLING_ALWAYS_SHOW = 1
         val TOOLING_ALWAYS_HIDE = 2
+
+        val GRID_MOVER = 0
+        val GRID_ROTATOR = 1
+        val GRID_SIZE_SETTER = 2
 
     }
 

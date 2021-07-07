@@ -104,6 +104,16 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             Log.d(tag, "Grid tooling visibility: $isShowing")
         }
 
+        lingGridView.gridToolingClickedListener = { gridToolingType ->
+            val toolingClicked = when(gridToolingType) {
+                LingGridView.GRID_MOVER -> "Grid Mover"
+                LingGridView.GRID_ROTATOR -> "Grid Rotator"
+                LingGridView.GRID_SIZE_SETTER -> "Grid Size Setter"
+                else -> "Error something else was clicked! $gridToolingType"
+            }
+           Log.d(tag, "Grid tooling clicked: $toolingClicked")
+        }
+
 
         when(lingGridView.gridToolingVisibilityType) {
             LingGridView.TOOLING_DEFAULT -> {

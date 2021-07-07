@@ -25,6 +25,9 @@ class GridMover @JvmOverloads constructor(
         if (event == null) return true
         return when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
+
+                lingGridContract?.onGridMoverClicked()
+
                 pushPointX = event.rawX
                 pushPointY = event.rawY
                 true
