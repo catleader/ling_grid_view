@@ -245,8 +245,8 @@ class LingGridView @JvmOverloads constructor(
     private var binding: LingGridViewBinding =
         LingGridViewBinding.inflate(LayoutInflater.from(context), this)
 
-    private val gridController: GridController
-        get() = binding.gridController
+    private val gridRotator: GridRotator
+        get() = binding.gridRotator
 
     private val gridMover: GridMover
         get() = binding.gridMover
@@ -272,7 +272,7 @@ class LingGridView @JvmOverloads constructor(
 
     private var gridMovedPoint = Point()
 
-    private val controllerPadding: Int
+    private val toolingPadding: Int
             by lazy { (resources.displayMetrics.density * 4).toInt() }
 
     /**
@@ -290,13 +290,13 @@ class LingGridView @JvmOverloads constructor(
         elevation = 1 * resources.displayMetrics.density
         gridUi.lingGridContract = this
 
-        gridController.visibility = View.GONE
+        gridRotator.visibility = View.GONE
         gridMover.visibility = View.GONE
         gridSizeSetter.visibility = View.GONE
         gridUi.visibility = View.GONE
 
         gridMover.lingGridContract = this
-        gridController.lingGridContract = this
+        gridRotator.lingGridContract = this
         gridSizeSetter.lingGridContract = this
 
         context.theme.obtainStyledAttributes(
@@ -408,7 +408,7 @@ class LingGridView @JvmOverloads constructor(
         gridToolingClickedListener?.invoke(GRID_SIZE_SETTER)
     }
 
-    override fun onGridControllerClicked() {
+    override fun onGridRotatorClicked() {
         gridToolingClickedListener?.invoke(GRID_ROTATOR)
     }
 
@@ -448,7 +448,7 @@ class LingGridView @JvmOverloads constructor(
         repositionGridTools()
         if(!initialized) {
             gridUi.visibility = View.VISIBLE
-            gridController.visibility = View.VISIBLE
+            gridRotator.visibility = View.VISIBLE
             gridMover.visibility = View.VISIBLE
             gridSizeSetter.visibility = View.VISIBLE
             initialized = true
@@ -461,47 +461,47 @@ class LingGridView @JvmOverloads constructor(
 
     private fun repositionGridTools() {
         val glp = gridUi.layoutParams as? LayoutParams? ?: return
-        val gclp = gridController.layoutParams as? LayoutParams? ?: return
+        val grlp = gridRotator.layoutParams as? LayoutParams? ?: return
         val gmlp = gridMover.layoutParams as? LayoutParams? ?: return
         val gslp = gridSizeSetter.layoutParams as? LayoutParams? ?: return
 
-        val gc = getRotatedPoint(
+        val gr = getRotatedPoint(
             gridCenterX = glp.leftMargin + glp.width / 2,
             gridCenterY = glp.topMargin + glp.height / 2,
-            targetX = glp.leftMargin + glp.width + controllerPadding,
-            targetY = glp.topMargin + glp.height + controllerPadding,
+            targetX = glp.leftMargin + glp.width + toolingPadding,
+            targetY = glp.topMargin + glp.height + toolingPadding,
             angle = gridUi.rotation
         )
 
-        val cGC = getRotatedPoint(
+        val cGR = getRotatedPoint(
             gridCenterX = glp.leftMargin + glp.width / 2,
             gridCenterY = glp.topMargin + glp.height / 2,
-            targetX = glp.leftMargin + glp.width + gclp.width / 2 + controllerPadding,
-            targetY = glp.topMargin + glp.height + gclp.height / 2 + controllerPadding,
+            targetX = glp.leftMargin + glp.width + grlp.width / 2 + toolingPadding,
+            targetY = glp.topMargin + glp.height + grlp.height / 2 + toolingPadding,
             angle = gridUi.rotation
         )
 
         val gs = getRotatedPoint(
             gridCenterX = glp.leftMargin + glp.width / 2,
             gridCenterY = glp.topMargin + glp.height / 2,
-            targetX = glp.leftMargin + glp.width + controllerPadding,
-            targetY = glp.topMargin + glp.height - gslp.height - controllerPadding,
+            targetX = glp.leftMargin + glp.width + toolingPadding,
+            targetY = glp.topMargin + glp.height - gslp.height - toolingPadding,
             angle = gridUi.rotation
         )
 
         val cGS = getRotatedPoint(
             gridCenterX = glp.leftMargin + glp.width / 2,
             gridCenterY = glp.topMargin + glp.height / 2,
-            targetX = glp.leftMargin + glp.width + gslp.width / 2 + controllerPadding,
-            targetY = glp.topMargin + glp.height - gslp.height / 2 - controllerPadding,
+            targetX = glp.leftMargin + glp.width + gslp.width / 2 + toolingPadding,
+            targetY = glp.topMargin + glp.height - gslp.height / 2 - toolingPadding,
             angle = gridUi.rotation
         )
 
         val gm = getRotatedPoint(
             gridCenterX = glp.leftMargin + glp.width / 2,
             gridCenterY = glp.topMargin + glp.height / 2,
-            targetX = glp.leftMargin + glp.width - gmlp.width - controllerPadding,
-            targetY = glp.topMargin + glp.height + controllerPadding,
+            targetX = glp.leftMargin + glp.width - gmlp.width - toolingPadding,
+            targetY = glp.topMargin + glp.height + toolingPadding,
             angle = gridUi.rotation
         )
 
@@ -509,25 +509,25 @@ class LingGridView @JvmOverloads constructor(
             gridCenterX = glp.leftMargin + glp.width / 2,
             gridCenterY = glp.topMargin + glp.height / 2,
             targetX = glp.leftMargin + glp.width - gmlp.width / 2,
-            targetY = glp.topMargin + glp.height + gmlp.height / 2 + controllerPadding,
+            targetY = glp.topMargin + glp.height + gmlp.height / 2 + toolingPadding,
             angle = gridUi.rotation
         )
 
-        val gcPoint = floatArrayOf(gc.x.toFloat(), gc.y.toFloat())
+        val gcPoint = floatArrayOf(gr.x.toFloat(), gr.y.toFloat())
 
         val gmPoint = floatArrayOf(gm.x.toFloat(), gm.y.toFloat())
 
         val gsPoint = floatArrayOf(gs.x.toFloat(), gs.y.toFloat())
 
-        mapRotationPoint(gcPoint, cGC.x.toFloat(), cGC.y.toFloat())
+        mapRotationPoint(gcPoint, cGR.x.toFloat(), cGR.y.toFloat())
 
         mapRotationPoint(gmPoint, cGM.x.toFloat(), cGM.y.toFloat())
 
         mapRotationPoint(gsPoint, cGS.x.toFloat(), cGS.y.toFloat())
 
-        gclp.leftMargin = gcPoint[0].toInt()
-        gclp.topMargin = gcPoint[1].toInt()
-        gridController.layoutParams = gclp
+        grlp.leftMargin = gcPoint[0].toInt()
+        grlp.topMargin = gcPoint[1].toInt()
+        gridRotator.layoutParams = grlp
 
         gmlp.leftMargin = gmPoint[0].toInt()
         gmlp.topMargin = gmPoint[1].toInt()
@@ -649,29 +649,29 @@ class LingGridView @JvmOverloads constructor(
         when (gridToolingVisibilityType) {
             TOOLING_DEFAULT -> {
                 if (zoomLevel >= getZoomLevelForToolingVisibilities()) {
-                    val shouldNotify = gridController.visibility != View.VISIBLE
-                    gridController.visibility = View.VISIBLE
+                    val shouldNotify = gridRotator.visibility != View.VISIBLE
+                    gridRotator.visibility = View.VISIBLE
                     gridMover.visibility = View.VISIBLE
                     gridSizeSetter.visibility = View.VISIBLE
                     if(shouldNotify) gridToolingVisibilityListener?.invoke(true)
                 } else {
-                    val shouldNotify = gridController.visibility != View.GONE
-                    gridController.visibility = View.GONE
+                    val shouldNotify = gridRotator.visibility != View.GONE
+                    gridRotator.visibility = View.GONE
                     gridMover.visibility = View.GONE
                     gridSizeSetter.visibility = View.GONE
                     if(shouldNotify) gridToolingVisibilityListener?.invoke(false)
                 }
             }
             TOOLING_ALWAYS_SHOW -> {
-                val shouldNotify = gridController.visibility != View.VISIBLE
-                gridController.visibility = View.VISIBLE
+                val shouldNotify = gridRotator.visibility != View.VISIBLE
+                gridRotator.visibility = View.VISIBLE
                 gridMover.visibility = View.VISIBLE
                 gridSizeSetter.visibility = View.VISIBLE
                 if(shouldNotify) gridToolingVisibilityListener?.invoke(true)
             }
             TOOLING_ALWAYS_HIDE -> {
-                val shouldNotify = gridController.visibility != View.GONE
-                gridController.visibility = View.GONE
+                val shouldNotify = gridRotator.visibility != View.GONE
+                gridRotator.visibility = View.GONE
                 gridMover.visibility = View.GONE
                 gridSizeSetter.visibility = View.GONE
                 if(shouldNotify) gridToolingVisibilityListener?.invoke(false)
@@ -697,10 +697,10 @@ class LingGridView @JvmOverloads constructor(
         glp.topMargin += yOffset
         gridUi.layoutParams = glp
 
-        val gclp = gridController.layoutParams as? LayoutParams? ?: return
-        gclp.leftMargin += xOffset
-        gclp.topMargin += yOffset
-        gridController.layoutParams = gclp
+        val grlp = gridRotator.layoutParams as? LayoutParams? ?: return
+        grlp.leftMargin += xOffset
+        grlp.topMargin += yOffset
+        gridRotator.layoutParams = grlp
 
         val gmlp = gridMover.layoutParams as? LayoutParams? ?: return
         gmlp.leftMargin += xOffset

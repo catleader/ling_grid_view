@@ -11,8 +11,8 @@
         android:layout_width="100dp"
         android:layout_height="100dp" />
 
-    <com.catleader.ling_grid_view.GridController
-        android:id="@+id/gridController"
+    <com.catleader.ling_grid_view.GridRotator
+        android:id="@+id/grid_rotator"
         android:layout_width="32dp"
         android:layout_height="32dp" />
 

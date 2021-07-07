@@ -9,7 +9,7 @@ interface LingGridContract {
 
     fun onGridSizeSetterClicked()
 
-    fun onGridControllerClicked()
+    fun onGridRotatorClicked()
 
     fun onGridMoverClicked()
 

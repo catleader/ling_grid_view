@@ -10,11 +10,11 @@ import androidx.core.content.ContextCompat
 import com.catleader.ling_grid_view.LingGridView.Companion.getVectorAmplitude
 import kotlin.math.acos
 
-class GridController @JvmOverloads constructor(
+class GridRotator @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
-    private val tag = "GridController"
+    private val tag = "GridRotator"
 
     init {
         background = ContextCompat.getDrawable(context, R.drawable.ic_grid_rotate)
@@ -39,7 +39,7 @@ class GridController @JvmOverloads constructor(
             MotionEvent.ACTION_DOWN -> {
                 if (!::lingGridContract.isInitialized) return false
 
-                lingGridContract.onGridControllerClicked()
+                lingGridContract.onGridRotatorClicked()
 
                 startedRotatedDegrees = lingGridContract.getGridUiRotation()
 
