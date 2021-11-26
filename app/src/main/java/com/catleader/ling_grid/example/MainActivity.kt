@@ -173,10 +173,18 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             if (!isInitialized) {
                 isInitialized = true
                 lingGridView.initGrid(step, map)
+                lingGridView.gridUi.rotation = 342.03445f
             }
         }
+        var gridUiAngle = 0f
+        var gMapAngle = 0f
 
         map.setOnCameraMoveListener {
+            gridUiAngle = lingGridView.gridUi.rotation
+            gMapAngle = googleMap.cameraPosition.bearing
+            Log.d(tag, "grid angle: $gridUiAngle")
+            Log.d(tag, "gmap angle: $gMapAngle")
+            Log.d(tag, "angle that should be set on gridUi later: ${gridUiAngle + gMapAngle}")
             lingGridView.onMapMove()
         }
 

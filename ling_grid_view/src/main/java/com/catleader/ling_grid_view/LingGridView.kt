@@ -254,7 +254,7 @@ class LingGridView @JvmOverloads constructor(
     private val gridSizeSetter: GridSizeSetter
         get() = binding.gridSizeSetter
 
-    private val gridUi: GridUI
+    val gridUi: GridUI
         get() = binding.gridUi
 
 
